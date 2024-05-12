@@ -1,6 +1,6 @@
 #
 # 六華（リッカ）
-# pict.py 2024/4/30
+# pict.py 2024/5/12
 #
 import pyxel
 import rkfont
@@ -12,8 +12,8 @@ AM_DRAW,AM_DISCARD,AM_WINNING = 301,302,303  # ActionMessage：ツモる,捨て�
 def textbox(x, y, txt, col=7, only_cnt=False):  # col：*0～*F, pip：$11～$66
     init_x = x
     init_col = col
-    pips,pip1,pip2 = 0,0,0
-    strs, lines = 1,1
+    pips, pip1, pip2 = 0, 0, 0
+    strs, lines = 1, 1
     for ch in txt:
         if col==-1:
             if ch=='*':
@@ -34,7 +34,7 @@ def textbox(x, y, txt, col=7, only_cnt=False):  # col：*0～*F, pip：$11～$66
         elif pips==2:
             if not only_cnt:
                 pip2 = int(ch)
-                small_tile(x, y-5, pip1, pip2, d=-1)
+                small_tile(x-4, y-1, pip1, pip2, thk=False)
             x += 8
             pips = 0
             continue
@@ -173,30 +173,36 @@ TM_STILE_D = {  # DIAGONAL
     (5,1):(80,120,1), (5,2):(160,120,1), (5,3):( 32,136,1), (5,4):( 80,136,1), (5,5):(112,136,0), (5,6):(128,136,0),
     (6,1):(96,120,1), (6,2):(176,120,1), (6,3):( 48,136,1), (6,4):( 96,136,1), (6,5):(128,136,1), (6,6):(144,136,0),
 }
-def small_tile(x, y, n1, n2, dr=2, d=3):  # Number1, Number2, Vertical/Horizontal/Diagonal0～3,ずれ0~5
+def small_tile(x, y, n1, n2, dr=2, d=3, thk=True):  # Number1, Number2, Vertical/Horizontal/Diagonal0～3,ずれ0~5
     if dr==2:  # Vertical
         if 1<=n1<=6 and 1<=n2<=6:
             pos = TM_STILE_V[(n1, n2)]
-            pyxel.blt(x+d+1, y+12, 0, 176, 92, 7, 3, 1)  # 厚み
+            if thk:
+                pyxel.blt(x+d+1, y+12, 0, 176, 92, 7, 3, 1)  # 厚み
             pyxel.blt(x+d+1, y, 0, pos[0], pos[1], 7, -13 if pos[2] else 13, 1)
         else:
-            pyxel.blt(x+d+1, y+12, 0, 176, 88, 7, 3, 1)  # 厚み
+            if thk:
+                pyxel.blt(x+d+1, y+12, 0, 176, 88, 7, 3, 1)  # 厚み
             pyxel.blt(x+d+1, y, 0, 8-8, 88, 7, 13, 1)  # 裏面
     elif dr==0:  # Horizontal
         if 1<=n1<=6 and 1<=n2<=6:
             pos = TM_STILE_H[(n1, n2)]
-            pyxel.blt(x, y+d+6, 0, 160, 116, 13, 3, 1)  # 厚み
+            if thk:
+                pyxel.blt(x, y+d+6, 0, 160, 116, 13, 3, 1)  # 厚み
             pyxel.blt(x, y+d, 0, pos[0], pos[1], -13 if pos[2] else 13, 7, 1)
         else:
-            pyxel.blt(x, y+d+6, 0, 160, 112, 13, 3, 1)  # 厚み
+            if thk:
+                pyxel.blt(x, y+d+6, 0, 160, 112, 13, 3, 1)  # 厚み
             pyxel.blt(x, y+d, 0, 0, 104, 13, 7, 1)
     elif dr in (1,3):  # Diagonal
         if 1<=n1<=6 and 1<=n2<=6:
             pos = TM_STILE_D[(n1, n2)]
-            pyxel.blt(x+d%3, y+d//3+7, 0, 160, 144, 12 if dr==3 else -12, 8, 1)  # 厚み
+            if thk:
+                pyxel.blt(x+d%3, y+d//3+7, 0, 160, 144, 12 if dr==3 else -12, 8, 1)  # 厚み
             pyxel.blt(x+d%3, y+d//3, 0, pos[0], pos[1], 12 if (dr==3)^pos[2] else -12, -13 if pos[2] else 13, 1)
         else:
-            pyxel.blt(x+d%3, y+d//3+7, 0, 160, 136, 12 if dr==3 else -12, 8, 1)  # 厚み
+            if thk:
+                pyxel.blt(x+d%3, y+d//3+7, 0, 160, 136, 12 if dr==3 else -12, 8, 1)  # 厚み
             pyxel.blt(x+d%3, y+d//3, 0, 0, 120, 12 if dr==3 else -12, 13, 1)
 
 def rotate(x, y):
