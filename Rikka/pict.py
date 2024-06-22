@@ -1,10 +1,10 @@
 #
-# 六華（リッカ）
-# pict.py 2024/5/12
+# 六華（リッカ）1.2
+# pict.py 2024/6/22
 #
 import pyxel
 import rkfont
-# HandName：六華(7),三連(3+bonus),一色(1+bonus),無双(9),輝光(5),三対(5+bonus),三色(3),立直,直撃
+# HandName：六華(7),三連(3～5),一色(1～3),無双(9),輝光(5),三対(5,7,9,11),三色(3),立直,直撃
 HN_NONE,HN_RIKKA,HN_SANREN,HN_ISSHIKI,HN_MUSOU,HN_KIKOU,HN_SANTSUI,HN_SANSHIKI = 0,101,102,103,104,105,106,107
 RL_REACH,RL_RON,RL_10PT = 111,112,113  # Rule：立直,直撃,10点終了
 AM_DRAW,AM_DISCARD,AM_WINNING = 301,302,303  # ActionMessage：ツモる,捨てる,勝つ
