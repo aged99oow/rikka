@@ -1,6 +1,6 @@
 #
-# 六華（リッカ）1.1
-# Rikka.py 2024/5/12
+# 六華（リッカ）1.2
+# Rikka.py 2024/6/22
 #
 DRAW_GRID,GRID_LINE = False,10  # DEBUGグリッド
 CONSOLEOUT = False  # DEBUGコンソール表示
@@ -8,16 +8,16 @@ P1_OPEN,P2_OPEN,P3_OPEN,RIVER_OPEN = False,False,False,False  # DEBUG手配表�
 import pyxel
 import json
 import pict
-# HandName：六華(7),三連(3+bonus),一色(1+bonus),無双(9),輝光(5),三対(5+bonus),三色(3),立直,直撃
+# HandName：六華(7),三連(3～5),一色(1～3),無双(9),輝光(5),三対(5,7,9,11),三色(3),立直,直撃
 HN_NONE,HN_RIKKA,HN_SANREN,HN_ISSHIKI,HN_MUSOU,HN_KIKOU,HN_SANTSUI,HN_SANSHIKI = 0,101,102,103,104,105,106,107
 RL_REACH,RL_RON,RL_10PT = 111,112,113  # Rule：立直,直撃,10点終了
 AM_DRAW,AM_DISCARD,AM_WINNING = 301,302,303  # ActionMessage：取る,捨てる,勝つ
 # GAMING
-WIDTH, HEIGHT = 16*9, 16*10
-OWN, P1, P2, P3 = 0, 1, 2, 3
+WIDTH,HEIGHT = 16*9,16*10
+OWN,P1,P2,P3 = 0,1,2,3
 NEXT = {OWN:P1, P1:P2, P2:P3, P3:OWN}
 DISABLE = -1
-SZ_SMALL, SZ_MID, SZ_LARGE = 1,2,3  # Size
+SZ_SMALL,SZ_MID,SZ_LARGE = 1,2,3  # Size
 MAX_TILE = 42  # (6+5+4+3+2+1)*2
 RIVER_LINE = 5
 RIVER_NUM = RIVER_LINE*RIVER_LINE  # 25
@@ -25,18 +25,18 @@ CHARA_XY = {OWN:(2,16*7-2), P1:(4,4), P2:(16*7-3,2), P3:(16*8-6,16*6+6)}
 MSG_XY = {OWN:(2+20,16*7-4), P1:(4+20,4+24), P2:(16*7-3,2+24), P3:(16*8-8,16*6+6)}
 TILE_XY = {OWN:(16+8,16*7,24,112,16,0), P1:(8,28,1,28,0,12), P2:(96,8,96,1,-12,0), P3:(130,86,120,86,0,-12)}  # 立ち位置X,Y,倒し位置X,Y,dx,dy
 RIVER_X,RIVER_Y = 16*2,16*2-4
-ROT_BTN_DY,HN_BTN_X, HN_BTN_Y = 38,16*7+10,16*7+13
+ROT_BTN_DY,HN_BTN_X,HN_BTN_Y = 38,16*7+10,16*7+13
 OP_HIDDEN,OP_STAND,OP_FACE,OP_BACK = -1,0,1,2  # Open：非表示-1,立ち0,表1,裏2
-TA_COMMON,TA_RIKKA,TA_SANREN,TA_ISSHIKI,TA_MUSOU,TA_KIKOU,TA_SANTSUI = 301,302,303,304,305,306,307  # Tactic
+TA_COMMON,TA_RIKKA,TA_SANREN,TA_ISSHIKI,TA_MUSOU,TA_KIKOU,TA_SANTSUI = HN_NONE,HN_RIKKA,HN_SANREN,HN_ISSHIKI,HN_MUSOU,HN_KIKOU,HN_SANTSUI  # Tactic
 CHARA_NAME = ('プレイヤー','プレイヤー','三対ピノキオ','三連ピーターパン','輝光人魚','無双桃太郎','輝光金太郎','六華の王様',
               'シャー六華ホームズ','無双赤ちゃん','一色悟空','三連法師','一色エイリアン','三対忍者')
 CAHAR_TACTIC = (TA_COMMON,TA_COMMON,TA_SANTSUI,TA_SANREN,TA_KIKOU,TA_MUSOU,TA_KIKOU,TA_RIKKA,
                 TA_RIKKA,TA_MUSOU,TA_ISSHIKI,TA_SANREN,TA_ISSHIKI,TA_SANTSUI)
 # TITLE
-RIKKA_BTN_X, RIKKA_BTN_Y = 16*6+6, 16*2-4
+RIKKA_BTN_X,RIKKA_BTN_Y = 16*6+6,16*2-4
 RULE_BTN_XY = {HN_MUSOU:(16*5+4,16*5-4),HN_KIKOU:(16*5+4,16*6-4),HN_SANTSUI:(16*5+4,16*7-4),HN_SANSHIKI:(16*5+4,16*8-4),
                RL_REACH:(16*7+4,16*5-4),RL_RON:(16*7+4,16*6-4),RL_10PT:(16*7-4,16*7-2)}
-START_BTN_X, START_BTN_Y = 16*6+2, 16*9
+START_BTN_X,START_BTN_Y = 16*6+2,16*9
 # GAMEEND
 CROWN_XY = {OWN:(16*4,16*6+6), P1:(16+2,16*3+6), P2:(16*4,16+4), P3:(16*7-1,16*3+4)}
 # rev=[0];for i in range(6):;rev=rev+[i]+rev
@@ -45,32 +45,41 @@ SQ_REV = (0,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,5,0,1,
 SQ_SANSHIKI = [(1,2,3),(1,2,4),(1,2,5),(1,2,6),(1,3,4),(1,3,5),(1,3,6),(1,4,5),(1,4,6),(1,5,6),
                (2,3,4),(2,3,5),(2,3,6),(2,4,5),(2,4,6),(2,5,6),(3,4,5),(3,4,6),(3,5,6),(4,5,6)]  # Squence Sanshiki
 SQ_SANREN = ((0,1,2,3,4,5),(0,1,3,2,4,5),(0,2,3,1,4,5),(0,2,4,1,3,5))  # Sequence Sanren
-ST_TITLE,ST_DEAL,ST_NEXT,ST_COM_PICK,ST_COM_PICK_MOVE,ST_COM_DISCARD,ST_COM_DISCARD_MOVE,ST_PICK,ST_PICK_MOVE,ST_DISCARD,ST_DISCARD_MOVE,ST_JUDGE,ST_JUDGE_OPEN,ST_JUDGE_MOVE,ST_ROUNDEND,ST_GAMEEND = \
-        101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116 # Status
+ST_TITLE,ST_DEAL,ST_NEXT,ST_COM_PICK,ST_COM_PICK_MOVE,ST_COM_DISCARD,ST_COM_DISCARD_MOVE = 901,902,903,904,905,906,907  # Status
+ST_PICK,ST_PICK_MOVE,ST_DISCARD,ST_DISCARD_MOVE,ST_JUDGE,ST_JUDGE_OPEN,ST_JUDGE_MOVE,ST_ROUNDEND,ST_GAMEEND = 908,909,910,911,912,913,914,915,916  # Status
 # Message
-MSG_OWN_PICK = ('どれ取る？','取りましょう')  # 順番が来た時（自動）
-MSG_OWN_DISCARD = ('どれ捨てる？','捨てましょう')  # 取った後（自動）
-MSG_OWN_WINORNOT = ('アガる？','アガりましょう','完成です','完成ですね')  # 取った後（自動）
-MSG_OWN_WINORDISCARD = ('アガる？','高得点を狙う？')  # 取った後（自動）
-MSG_OWN_WIN = ('アガり','完成','勝ち')  # 完成（自動）
-MSG_OWN_TSUIDE = ('ついでに完成','ついでにアガり')  # ついでに完成（自動）
-MSG_OWN_PICKONE = ('取る？','取ったら？','取ろう','取ろうか')  # 取る時（キャラクタークリック）
-MSG_OWN_DISCARDONE = ('捨てる？','捨てれば？','捨てたら？','捨てよう','捨てようか','いらない？','いらないかな')  # 捨てる時（キャラクタークリック）
-MSG_OWN_WINONE = ('アガる？','アガれば？','アガったら？','アガりましょう','アガろうか','完成です','完成ですね')  # 捨てる時（キャラクタークリック）
-MSG_OWN_ROUNDWIN = ('おめでとう','やったね','やりましたね','この調子で行こう','次も勝とう','上手ですね')  # ラウンド終了（キャラクタークリック）
-MSG_OWN_ROUNDLOSE = ('残念','惜しい','次は勝てる')  #  ラウンド終了（キャラクタークリック）
-MSG_OWN_GAMEWIN = ('おめでとう','お見事','あなたの勝ち','素晴らしい','１位ですね')  #  ゲーム終了（キャラクタークリック）
-MSG_OWN_GAMELOSE = ('残念','まあまあでした','次は勝てる')  #  ゲーム終了（キャラクタークリック）
+MSG_HANDNAME = {HN_NONE:'なし',HN_RIKKA:'六華',HN_SANREN:'三連',HN_ISSHIKI:'一色',HN_MUSOU:'無双',HN_KIKOU:'輝光',HN_SANTSUI:'三対',HN_SANSHIKI:'三色'}
+MSG_OWN_PICK = ('どれを取ろうか','どれを取りましょうか','どれにしますか','取りましょう')  # 順番が来た時（自動）
+MSG_OWN_DISCARD = ('どれを捨てようか','どれを捨てましょうか','どれにしますか','捨てましょう')  # 取った後（自動）
+MSG_OWN_WINORNOT = ('アガりましょう','やりましたね','完成です','完成ですね','完成しました','完成しましたね')  # 取った後（自動）
+MSG_OWN_WINORDISCARD = ('アガりますか','完成ですがアガりますか','続けますか','続けましょう','完成ですが続けますか','高得点を狙いますか')  # 取った後（自動）
+MSG_OWN_WIN = ('アガり','完成ですね','勝ち','アガりです','完成です','勝ちです')  # 完成（自動）
+MSG_OWN_TSUIDE = ('ついでに完成','ついでにアガり','ついでに完成です','ついでにアガりです')  # ついでに完成（自動）
+MSG_OWN_PICKONE = ('を取ろうか','を取りますか','を取りましょう','を取ろう','は必要ですね','は必要だね','これはいるね')  # 取る時（キャラクタークリック）
+MSG_OWN_DISCARDONE = ('を捨てようか','を捨てますか','を捨てましょう','を捨てよう','これはいらないね')  # 捨てる時（キャラクタークリック）
+MSG_OWN_WINONE = ('やったね','うまいですね','アガりましょう','アガろう','完成しましたね','完成です','完成ですね')  # 捨てる時（キャラクタークリック）
+MSG_OWN_ROUNDWIN = ('おめでとう','やりましたね','うまくいきましたね','この調子でいきましょう','次も勝ちましょう','上手ですね')  # ラウンド終了勝ち（キャラクタークリック）
+MSG_OWN_ROUNDLOSE = ('残念ですね','おしいですね','もう少しでしたね','次は勝ちますよ','勝負はこれからですよ')  #  ラウンド終了負け（キャラクタークリック）
+MSG_OWN_GAMEWIN = ('おめでとう','おめでとうございます','お見事です','あなたの勝ちです','素晴らしいです','１位ですね')  #  ゲーム終了勝ち（キャラクタークリック）
+MSG_OWN_GAMELOSE = ('残念でしたね','もう一回しましょう','次は勝ちますよ','いい勝負でした')  #  ゲーム終了負け（キャラクタークリック）
 
-MSG_OPP_PICK = ('さて','さてと','えーっと','よし','いいね','いいぞ','う～ん','これから','まだまだ','まあまあ','うんうん','そうそう','どうしよう')  # 取る（自動）
+MSG_OPP_PICK_FACE = ('欲しいのはこれ','これが欲しかった','これこれ','まさにこれ','これがあれば','ほぼ完成')  # 取る表牌（自動）
+MSG_OPP_PICK = ('さて','さてと','えーっと','よし','いいね','いいぞ','う～ん','これから','まだまだ','まあまあ','うんうん','そうそう','どうしよう','そうねぇ','えいっ')  # 取る（自動）
+MSG_OPP_TSUMOGIRI = ('ツモ切りで','ツモ牌いらない','いらない牌だった','引きが悪い','ツモが悪い')  # ツモ切り（自動）
 MSG_OPP_DISCARD = ('これだ','いいね','いらない','もう少し','いい感じ','まだまだ','これから','どうしよう')  # 捨てる（自動）
+MSG_OPP_DISCARDBUTWIN = ('完成したけど','そろったけど','もう少し続けよう','様子をみよう','続けてみようかな','ついでに完成も狙って','アガれるけど','高得点を目指そう')  # 完成でも捨てる（自動）
 MSG_OPP_WIN = ('アガり','勝ち','よし','やった','狙いどおり','完成','ラッキー','できあがり')  # アガり/ついでに完成（自動）
 MSG_OPP_TSUIDE = ('ついでに完成','ついでにアガり','こちらも完成','こちらもアガり')  # ついでに完成（自動）
-MSG_OPP_CHARA = ('楽しくやりましょう','本気で行きます','負けません','手加減しません','これからです','調子いいです','真剣勝負です')  # （キャラクタークリック）
-MSG_OPP_ROUNDWIN = ('やったぁ','うまくいった','思いどおり')  # ラウンド終了（キャラクタークリック）
-MSG_OPP_ROUNDLOSE = ('悔しい','次は勝つ','ミスしました')  #  ラウンド終了（キャラクタークリック）
-MSG_OPP_GAMEWIN = ('１位!!','やったぁ','うまくいった','嬉しい','楽しかった')  #  ゲーム終了（キャラクタークリック）
-MSG_OPP_GAMELOSE = ('あーあ','残念','残念だ','次は勝つ','失敗でした','もう一回','ツイてない')  #  ゲーム終了（キャラクタークリック）
+MSG_OPP_CHARA = ('楽しいですね','本気でいきますよ','負けませんよ','今回は勝ちます','手加減しません','これからです','調子いいです','真剣勝負で')  # （キャラクタークリック）
+MSG_OPP_OPENING = ('序盤は様子見で','よろしくお願いします','よろしく','お願いします','始めが大事','いい牌がそろってます')  # 序盤（キャラクタークリック）
+MSG_OPP_CLOSING = ('終盤ですね','そろそろ終わりですね','あきらめません','そろそろアガりかな','誰がアガりそう')  # 終盤（キャラクタークリック）
+MSG_OPP_HAND_PRE = ('得意な役は','好きな役は','狙いは','目指すは','ゴールは','今回の狙いは')  # 得意役（キャラクタークリック）「～です」
+MSG_OPP_HAND_POST = ('が得意です','を狙います','狙いで','狙いです','でアガりたい')  # 得意役（キャラクタークリック）
+MSG_OPP_ROUNDWIN = ('次もアガります','やりました','うまくいきました','うれしいです','調子いいです','調子がよかった')  # ラウンド終了勝ち（キャラクタークリック）
+MSG_OPP_ROUNDWIN_PRE = ('得意の','狙いどおり','狙いどおりの','狙いの','いつもの','今回も')  # ラウンド終了得意役勝ち（キャラクタークリック）「～です」
+MSG_OPP_ROUNDLOSE = ('くやしいです','あと一歩でした','もう少しだったのに','次は勝ちます','ミスしました','うまくいきません','次にいきましょう')  #  ラウンド終了負け（キャラクタークリック）
+MSG_OPP_GAMEWIN = ('１位です','次も勝ちます','うまくいきました','うれしいです','楽しいですね','楽しかったです','運がよかったです','運も実力のうちです','もう一回しましょう')  #  ゲーム終了勝ち（キャラクタークリック）
+MSG_OPP_GAMELOSE = ('負けました','残念です','次は勝ちます','失敗でした','もう一回しましょう','出直します','運八技二ですから','もっと強くなりたい','いい勝負でした')  #  ゲーム終了負け（キャラクタークリック）
 
 class Shooting:
     def __init__(self, x, y, width, height, rate=200):
@@ -165,7 +174,7 @@ class Confetti:  # 紙吹雪
         for i in reversed(range(len(self.conft))):
             pyxel.rect(self.conft[i][0], self.conft[i][1], 2, 2, self.conft[i][2])
 
-class Balloon:
+class Balloon:  # 吹き出し
     def __init__(self, x, y, player, txt, tm=30, col=7):
         self.x, self.y, self.player, self.txt, self.tm, self.col = x, y, player, txt, tm, col
     def update(self):
@@ -214,19 +223,6 @@ class App:
         else:
             self.rept = 0
 
-    def se(self, n):  # 効果音(未使用)
-        pyxel.play(3, 0)  # オープンモードON
-        pyxel.play(3, 1)  # オープンモードOFF
-        pyxel.play(3, 3)  # 選択音
-        pyxel.play(3, 4)  # 取消し音
-        pyxel.play(3, 5)  # メッセージ
-        pyxel.play(3, 6)  # 配る音
-        pyxel.play(3, 7)  # 取る音／捨てる音
-        pyxel.play(3, 8)  # 降りる音
-        pyxel.play(3, 10)  # 勝ち音
-        pyxel.play(3, 11)  # アガリ音
-        pyxel.play(3, 12)  # 負け音
-
     def dotset(self):  # 背景ドットセット
         self.dot = [[pyxel.rndi(0,WIDTH),pyxel.rndi(0,HEIGHT//2+10),pyxel.rndi(12,13)] for _ in range(30)]
         self.dot.extend([[pyxel.rndi(0,WIDTH),pyxel.rndi(HEIGHT//2-10,HEIGHT),pyxel.rndi(1,2)] for _ in range(30)])
@@ -252,11 +248,11 @@ class App:
                 self.tile[n][1] = j
                 n += 1
 
-    def p_choice(self, s):  # pyxelチョイス
+    def p_choice(self, s):  # pyxel_choice
         r = pyxel.rndi(0,len(s)-1)
         return s[r]
 
-    def p_shuffle(self, s):  # pyxelシャッフル
+    def p_shuffle(self, s):  # pyxel_shuffle
         for i in reversed(range(len(s))):
             j = pyxel.rndi(0,i-1)
             s[i],s[j] = s[j],s[i]
@@ -272,14 +268,14 @@ class App:
         self.round_n += 1
         self.turn = self.startplayer
         self.startplayer = NEXT[self.startplayer]
-        self.cfmhandname = {OWN:HN_NONE, P1:HN_NONE, P2:HN_NONE, P3:HN_NONE}  # 確定役名
+        self.win_handname = {OWN:HN_NONE, P1:HN_NONE, P2:HN_NONE, P3:HN_NONE}  # 確定役名
         self.handname_own, self.handscore_own = HN_NONE, 0
         self.handopen = {OWN:[OP_STAND]*6, P1:[OP_STAND]*6, P2:[OP_STAND]*6, P3:[OP_STAND]*6}  # 立ち
         self.addscore = {OWN:0, P1:0, P2:0, P3:0}
         self.hand = {OWN:[], P1:[], P2:[], P3:[]}
         self.obvi_hand = {OWN:[], P1:[], P2:[], P3:[]}  # 明らかな手牌
         self.dsp_river = [[DISABLE] for _ in range(RIVER_NUM)]  # len()=25
-        self.river = []
+        self.river = []  # 全河牌 [目1,目2]×22, 表示河牌:dsp_river=[河牌番号0～21,回転0～3,ずれ0～5,オープン1]or[ENABLE]×RIVER_NUM(25)
         self.bgm_n = pyxel.rndi(1,len(self.bgm)-1)
 
     def gamestart(self):
@@ -294,32 +290,44 @@ class App:
         chara_order = [i for i in range(2,14)]
         self.p_shuffle(chara_order)
         self.chara = {OWN:pyxel.rndi(0,1), P1:chara_order[0], P2:chara_order[1], P3:chara_order[2]}
+        #self.chara[P1], self.chara[P3] = 10, 12  # __DEBUG__ プレイヤー
         self.tactic = {P1:CAHAR_TACTIC[self.chara[P1]], P2:CAHAR_TACTIC[self.chara[P2]], P3:CAHAR_TACTIC[self.chara[P3]]}
         self.win_list = []
         self.score = {OWN:0, P1:0, P2:0, P3:0}
         self.roundstart()
 
-    def message_pick(self, p):  # 取るメッセージ, Player
+    def message_pick(self, p):  # 取るメッセージ, Player, self.pickedtileface
         pyxel.play(3, 5)  # メッセージ音
-        msg = self.p_choice(MSG_OWN_PICK if p==OWN else MSG_OPP_PICK)
+        if p==OWN:
+            msg = self.p_choice(MSG_OWN_PICK)
+        elif self.pickedtileface and pyxel.rndi(0,1)==0:  # 表牌ツモ
+            msg = self.p_choice(MSG_OPP_PICK_FACE)
+        else:
+            msg = self.p_choice(MSG_OPP_PICK)
         self.balloon.append(Balloon(*MSG_XY[p], p, msg, tm=40 if p==OWN else 30))
 
-    def message_discard(self, p, sc=0):  # 捨てるメッセージ, Player, Score 
+    def message_discard(self, p, add_sc):  # 捨てるメッセージ, Player, Score 
         if p==OWN or pyxel.rndi(0,1)==0:
             pyxel.play(3, 5)  # メッセージ音
-            msg = self.p_choice(MSG_OPP_DISCARD if p!=OWN else MSG_OWN_DISCARD if sc==0 else MSG_OWN_WINORDISCARD if sc<5 else MSG_OWN_WINORNOT)
+            if p==OWN:
+                msg = self.p_choice(MSG_OWN_DISCARD if add_sc==0 else MSG_OWN_WINORDISCARD if add_sc<5 else MSG_OWN_WINORNOT)
+            else:
+                if self.discard_n==5 and pyxel.rndi(0,1)==0:
+                    msg = self.p_choice(MSG_OPP_TSUMOGIRI)
+                else:
+                    msg = self.p_choice(MSG_OPP_DISCARD if add_sc==0 else MSG_OPP_DISCARDBUTWIN)
             self.balloon.append(Balloon(*MSG_XY[p], p, msg, tm=40 if p==OWN else 20))
             return True
         return False
 
-    def message_win(self, p):  # アガるメッセージ, Player
+    def message_win(self, p, cfm_hn, add_sc):  # アガるメッセージ, Player, HandName, Score
         pyxel.play(3, 5)  # メッセージ音
-        msg = self.p_choice(MSG_OWN_WIN if p==OWN else MSG_OPP_WIN)
+        msg = self.p_choice(MSG_OWN_WIN if p==OWN else MSG_OPP_WIN)+f'\n*A{MSG_HANDNAME[cfm_hn]}{add_sc}点'
         self.balloon.append(Balloon(*MSG_XY[p], p, msg, tm=50))
 
-    def message_tsuide(self, p):  # ついでに完成メッセージ, Player
+    def message_tsuide(self, p, cfm_hn, add_sc):  # ついでに完成メッセージ, Player, HandName, Score
         pyxel.play(3, 5)  # メッセージ音
-        msg = self.p_choice(MSG_OWN_WIN+MSG_OWN_TSUIDE if p==OWN else MSG_OPP_WIN+MSG_OPP_TSUIDE)
+        msg = self.p_choice(MSG_OWN_WIN+MSG_OWN_TSUIDE if p==OWN else MSG_OPP_WIN+MSG_OPP_TSUIDE)+f'\n*9{MSG_HANDNAME[cfm_hn]}{add_sc}点'
         self.balloon.append(Balloon(*MSG_XY[p], p, msg, tm=50))
 
     def tile_rotate(self, tl):  # 牌回転
@@ -377,10 +385,10 @@ class App:
                     for sq in SQ_SANREN:
                         if h2[sq[0]][0]+2==h2[sq[1]][0]+1==h2[sq[2]][0] and h2[sq[3]][0]+2==h2[sq[4]][0]+1==h2[sq[5]][0]:
                             self.win_sequence = [h2[i] for i in sq]
-                            return HN_SANREN, 3+bonus  # 三連(3+bonus)
-                    return HN_ISSHIKI, 1+bonus  # 一色(1+bonus)
+                            return HN_SANREN, 3+bonus  # 三連(3～5)
+                    return HN_ISSHIKI, 1+bonus  # 一色(1～3)
             if h2[0][1]==h2[1][1]==h2[2][1] and h2[3][1]==h2[4][1]==h2[5][1] and h2[0][0]+2==h2[1][0]+1==h2[2][0] and h2[3][0]+2==h2[4][0]+1==h2[5][0]:
-                return HN_SANREN, 3+bonus  # 三連(3+bonus)
+                return HN_SANREN, 3+bonus  # 三連(3～5)
         return HN_NONE, 0
 
     def list_add(self, lst1, lst2, mul=1):  # リスト加算
@@ -432,7 +440,7 @@ class App:
             return discard_cndi,discard_cndi
         return [0]*len(hand),discard_cndi
 
-    def thkg_santsui(self, hand):  # 三対(5)高み-2,アガり-1,聴牌2,一向聴1
+    def thkg_santsui(self, hand):  # 三対(5,7,9,11)高み-2,アガり-1,聴牌2,一向聴1
         discard_cndi = [1]*len(hand)
         h = [x[:] for x in hand]
         self.hand_norm(h)  # 回転正規化
@@ -449,7 +457,7 @@ class App:
             return discard_cndi
         return [0]*len(h)
 
-    def thkg_sanren(self, hand):  # 三連(5)アガり-1,聴牌2,一向聴1／二連1
+    def thkg_sanren(self, hand):  # 三連(3～5)アガり-1,聴牌2,一向聴1／二連1
         chain = []
         chain3 = False
         for i,h1 in enumerate(hand):
@@ -537,175 +545,15 @@ class App:
                         discard_cndi[i] = 1
         return discard_cndi
 
-    def consoleout_text(self, txt):
+    def consoleout_text(self, txt):  # __DEBUG__
         if not CONSOLEOUT:
             return
         print(txt)
 
-    # 全河牌:self.river=[目1,目2]×22, 表示河牌:dsp_river=[河牌番号0～21,回転0～3,ずれ0～5,オープン1]or[ENABLE]×RIVER_NUM(25)
-    def pickup_common(self, max_sc, win_river_n):
-        pickup_cndi1 = list(set(self.pickup_musou_cndi) | set(self.pickup_rikka_cndi) | set(self.pickup_kikou_cndi) | set(self.pickup_santsui_cndi))
-        pickup_cndi2 = list(set(self.pickup_sanren_cndi) | set(self.pickup_isshiki_cndi))
-        pickup_cndi3 = self.river_back[:]
-        if pickup_cndi1 or pickup_cndi2:
-            self.consoleout_text(f'取る基本：{pickup_cndi1}, {pickup_cndi2}')
-        if max_sc>=5:
-            return win_river_n
-        if pickup_cndi1:
-            if win_river_n!=DISABLE:
-                pickup_cndi1.append(win_river_n)
-            return self.p_choice(pickup_cndi1)
-        if pickup_cndi2:
-            if win_river_n!=DISABLE:
-                pickup_cndi2.append(win_river_n)
-            return self.p_choice(pickup_cndi2)
-        if pickup_cndi3:
-            if win_river_n!=DISABLE:
-                pickup_cndi3.append(win_river_n)
-            return self.p_choice(pickup_cndi3)
-        if win_river_n!=DISABLE:
-            return win_river_n
-        return pyxel.rndi(0,len(self.river)-1)
-
-    def pickup_rikka(self, max_sc, win_river_n): 
-        if self.pickup_rikka_cndi or self.pickup_isshiki_cndi:
-            self.consoleout_text(f'取る六華：六華{self.pickup_rikka_cndi}, 一色{self.pickup_isshiki_cndi}')
-        if max_sc>=5:
-            return win_river_n
-        if self.pickup_rikka_cndi:
-            return self.p_choice(self.pickup_rikka_cndi)
-        if self.pickup_isshiki_cndi:
-            return self.p_choice(self.pickup_isshiki_cndi)
-        if self.river_back:
-            return self.p_choice(self.river_back)
-        return pyxel.rndi(0,len(self.river)-1)
-
-    def pickup_isshiki(self, max_sc, win_river_n):
-        if self.pickup_rikka_cndi or self.pickup_isshiki_cndi:
-            self.consoleout_text(f'取る一色：六華{self.pickup_rikka_cndi}, 一色{self.pickup_isshiki_cndi}')
-        if max_sc:
-            return win_river_n
-        if self.pickup_rikka_cndi:
-            return self.p_choice(self.pickup_rikka_cndi)
-        if self.pickup_isshiki_cndi:
-            return self.p_choice(self.pickup_isshiki_cndi)
-        if self.river_back:
-            return self.p_choice(self.river_back)
-        return pyxel.rndi(0,len(self.river)-1)
-
-    def pickup_sanren(self, max_sc, win_river_n): 
-        if self.pickup_sanren_cndi or self.pickup_isshiki_cndi:
-            self.consoleout_text(f'取る三連：三連{self.pickup_sanren_cndi}, 一色{self.pickup_isshiki_cndi}')
-        if max_sc:
-            return win_river_n
-        if self.pickup_sanren_cndi:
-            return self.p_choice(self.pickup_sanren_cndi)
-        if self.pickup_isshiki_cndi:
-            return self.p_choice(self.pickup_isshiki_cndi)
-        if self.river_back:
-            return self.p_choice(self.river_back)
-        return pyxel.rndi(0,len(self.river)-1)
-
-    def pickup_santsui(self, max_sc, win_river_n): 
-        if self.pickup_santsui_cndi:
-            self.consoleout_text(f'取る三対：{self.pickup_santsui_cndi}')
-        if max_sc:
-            return win_river_n
-        if self.pickup_santsui_cndi:
-            return self.p_choice(self.pickup_santsui_cndi)
-        if self.river_back:
-            return self.p_choice(self.river_back)
-        return pyxel.rndi(0,len(self.river)-1)
-
-    def pickup_musou(self, hand_bonus, max_sc, win_river_n):
-        pickup_cndi1 = list(set(self.pickup_musou_cndi) | set(self.pickup_rikka_cndi))
-        if pickup_cndi1:
-            self.consoleout_text(f'取る無双：{pickup_cndi1}')
-        bonus_num = hand_bonus+len(self.pickup_bonus_cndi)
-        if pickup_cndi1:
-            return self.p_choice(pickup_cndi1)
-        if max_sc>=5:
-            return win_river_n
-        if self.pickup_bonus_cndi and bonus_num>=4:
-            return self.p_choice(self.pickup_bonus_cndi)
-        if self.river_back:
-            return self.p_choice(self.river_back)
-        return pyxel.rndi(0,len(self.river)-1)
-
-    def pickup_allcandidate(self, hand):
-        self.pickup_rikka_cndi, self.pickup_sanren_cndi, self.pickup_isshiki_cndi = [], [], []
-        self.pickup_musou_cndi, self.pickup_kikou_cndi, self.pickup_bonus_cndi = [], [], []
-        self.pickup_santsui_cndi, self.pickup_sanshiki_cndi = [], []
-        self.river_back = []
-        max_sc = 0
-        win_river_n = DISABLE
-        hand_bonus = self.chk_bonus(hand)  # 手牌ボーナス牌
-        for i,tile in enumerate(self.dsp_river):
-            river_n = tile[0]
-            if river_n!=DISABLE:  # 存在
-                if tile[3]:  # 表
-                    h = [x[:] for x in hand]
-                    h.append([self.river[tile[0]][0],self.river[tile[0]][1]])
-                    _hn, sc = self.chk_hand(h)
-                    if sc>max_sc:
-                        max_sc = sc
-                        win_river_n = tile[0]
-                    rikka_cndi = self.thkg_rikka(h)
-                    if 2 in rikka_cndi and rikka_cndi[-1]!=2:  # 六華聴牌
-                        self.pickup_rikka_cndi.append(river_n)
-                    sanren_cndi, _niren_cndi = self.thkg_sanren(h)
-                    if 2 in sanren_cndi and sanren_cndi[-1]!=2:  # 三連聴牌
-                        self.pickup_sanren_cndi.append(river_n)
-                    isshiki_cndi = self.thkg_isshiki(h)
-                    if 2 in isshiki_cndi and isshiki_cndi[-1]!=2:  # 一色聴牌
-                        self.pickup_isshiki_cndi.append(river_n)
-                    if self.rule_musou:  # 無双ルールあり
-                        musou_cndi = self.thkg_musou(h)
-                        if 2 in musou_cndi and musou_cndi[-1]!=2:  # 無双聴牌
-                            self.pickup_musou_cndi.append(river_n)
-                    if self.rule_kikou:  # 輝光ルールあり
-                        kikou_cndi, bonus_cndi = self.thkg_kikou(h)
-                        if 2 in kikou_cndi and kikou_cndi[-1]!=2:  # 輝光聴牌
-                            self.pickup_kikou_cndi.append(river_n)
-                        if 1 in bonus_cndi and bonus_cndi[-1]!=1:  # ボーナス
-                            self.pickup_bonus_cndi.append(river_n)
-                    if self.rule_santsui:  # 三対ルールあり
-                        santsui_cndi = self.thkg_santsui(h)
-                        if 2 in santsui_cndi and santsui_cndi[-1]!=2:  # 三対聴牌
-                            self.pickup_santsui_cndi.append(river_n)
-                    if self.rule_sanshiki:  # 三色ルールあり
-                        sanshiki_cndi = self.thkg_sanshiki(h)
-                        if 2 in sanshiki_cndi and sanshiki_cndi[-1]!=2:  # 三色聴牌
-                            self.pickup_sanshiki_cndi.append(river_n)
-                else:  # 裏
-                    self.river_back.append(river_n)
-        return max_sc, win_river_n
-
-    def com_pickup(self, hand):  # 【戦略】どれを取るか
-        max_sc, win_river_n = self.pickup_allcandidate(hand)
-        hand_bonus = self.chk_bonus(hand)  # 手牌ボーナス牌
-        if self.tactic[self.turn]==TA_RIKKA:
-            return self.pickup_rikka(max_sc, win_river_n)
-        if self.tactic[self.turn]==TA_SANREN:
-            return self.pickup_sanren(max_sc, win_river_n)
-        if self.tactic[self.turn]==TA_ISSHIKI:
-            return self.pickup_isshiki(max_sc, win_river_n)
-        if self.tactic[self.turn] in (TA_MUSOU, TA_KIKOU):
-            if self.rule_musou:
-                return self.pickup_musou(hand_bonus, max_sc, win_river_n)
-        if self.tactic[self.turn]==TA_SANTSUI:
-            if self.rule_santsui:
-                return self.pickup_santsui(max_sc, win_river_n)
-        return self.pickup_common(max_sc, win_river_n)
-
-    def select_discard(self, cndi):
-        discard = [i for i,m in enumerate(cndi) if m==max(cndi)]  # 捨てる牌番号
-        return self.p_choice(discard) if discard else pyxel.rndi(0,5)
-
-    def consoleout_discard(self, tac, sum_cndi, mul_musou=1, mul_rikka=1, mul_kikou=1, mul_santsui=1, mul_sanren=1, mul_sanshiki=1, mul_isshiki=1, mul_bonus=1, mul_niren=1):
+    def consoleout_discard(self, tac, sum_cndi, mul_musou=1, mul_rikka=1, mul_kikou=1, mul_santsui=1, mul_sanren=1, mul_sanshiki=1, mul_isshiki=1, mul_bonus=1, mul_niren=1):  # __DEBUG__
         if not CONSOLEOUT:
             return
-        print('========= 捨てる（'+tac+'） =========')
+        print(f'P{self.turn} ===== 捨てる（'+tac+'） =====')
         if self.rule_musou:
             if self.musou_cndi[0]>=0:
                 print(f'無双9 {self.musou_cndi}×{mul_musou}')
@@ -740,10 +588,50 @@ class App:
             print('一色1+[      完成      ]')
         print(f'輝き  {self.bonus_cndi}×{mul_bonus}')
         print(f'二連  {self.niren_cndi}×{mul_niren}')
-        print('----------------------------------')
+        print('-----------------------------')
         print(f'合計  {sum_cndi}')
 
-    def discard_common(self):
+    def select_discard(self, cndi):
+        discard = [i for i,m in enumerate(cndi) if m==max(cndi)]  # 捨てる牌番号
+        return self.p_choice(discard) if discard else pyxel.rndi(0,5)
+
+    def pickup_common(self, win_river_n):  # 取る戦略：基本
+        if self.win_sc>=5:  # 無双(9)アガり,六華(7)アガり,輝光(5)アガり,三連(5)アガり,三対(5,7,9,11)アガり
+            self.win_cfm = True
+            return win_river_n
+        pickup_cndi = list(set(self.pickup_musou1_cndi) | set(self.pickup_rikka1_cndi) | set(self.pickup_kikou1_cndi) | set(self.pickup_santsui1_cndi))
+        if pickup_cndi:  # 無双(9)聴牌,六華(7)聴牌,輝光(5)聴牌,三対(5,7,9,11)聴牌
+            if win_river_n!=DISABLE:
+                pickup_cndi.append(win_river_n)
+            return self.p_choice(pickup_cndi)
+        if self.win_sc>=3:  # 三連(3,4)アガり,一色(3)アガり
+            self.win_cfm = True
+            return win_river_n
+        pickup_cndi = list(set(self.pickup_sanren1_cndi) | set(self.pickup_isshiki1_cndi))
+        if pickup_cndi:  # 三連(3～5)聴牌,一色(1～3)聴牌
+            if win_river_n!=DISABLE:
+                pickup_cndi.append(win_river_n)
+            return self.p_choice(pickup_cndi)
+        if self.river_back:  # 裏
+            return self.p_choice(self.river_back)
+        if self.win_sc:  # 一色(1)アガり
+            self.win_cfm = True
+            return win_river_n
+        return pyxel.rndi(0,len(self.river)-1)  # 全て表
+
+    def win_or_discard_common(self, hand):  # アガる／捨てる戦略：基本
+        if self.win_sc>=5:  # 無双(9)アガり,六華(7)アガり,輝光(5)アガり,三連(5)アガり,三対(5,7,9,11)アガり
+            return -1  # アガり
+        if 2 in self.musou_cndi or 2 in self.rikka_cndi or 2 in self.kikou_cndi or 2 in self.santsui_cndi:  # 無双(9)聴牌,六華(7)聴牌,輝光(5)聴牌,三対(5,7,9,11)聴牌
+            cndi = [1 if x==2 or y==2 or z==2 or w==2 else 0 for x,y,z,w in zip(self.musou_cndi,self.rikka_cndi,self.kikou_cndi,self.santsui_cndi)]
+            self.consoleout_text(f'P{self.turn} 無双(9)聴牌,六華(7)聴牌,輝光(5)聴牌,三対(5,7,9,11)聴牌 {cndi}')  # __DEBUG__
+            return self.select_discard(cndi)
+        if self.win_sc>=3:  # 三連(3,4)アガり,一色(3)アガり
+            return -1  # アガり
+        if 2 in self.sanren_cndi or 2 in self.isshiki_cndi:  # 三連(3～5)聴牌,一色(1～3)聴牌
+            cndi = [1 if x==2 or y==2 else 0 for x,y in zip(self.sanren_cndi,self.isshiki_cndi)]
+            self.consoleout_text(f'P{self.turn} 三連(3～5)聴牌,一色(1～3)聴牌 {cndi}')  # __DEBUG__
+            return self.select_discard(cndi)
         sum_cndi = [0]*len(self.musou_cndi)
         if self.rule_musou and self.musou_cndi[0]>=0:
             self.list_add(sum_cndi, self.musou_cndi, 4)
@@ -761,10 +649,51 @@ class App:
             self.list_add(sum_cndi, self.isshiki_cndi, 2)
         self.list_add(sum_cndi, self.bonus_cndi)
         self.list_add(sum_cndi, self.niren_cndi)
-        self.consoleout_discard('基本', sum_cndi, 4, 4, 3, 3, 3, 2, 2, 1, 1)
+        self.consoleout_discard('基本', sum_cndi, 4, 4, 3, 3, 3, 2, 2, 1, 1)  # __DEBUG__
         return self.select_discard(sum_cndi)
 
-    def discard_rikka(self):
+    def pickup_rikka(self, win_river_n):  # 取る戦略：六華(7)
+        if self.win_sc>=7:  # 無双(9)アガり,六華(7)アガり,三対(7,9,11)アガり
+            self.win_cfm = True
+            return win_river_n
+        if self.pickup_musou1_cndi:  # 無双(9)聴牌
+            return self.p_choice(self.pickup_musou1_cndi)
+        if self.pickup_rikka1_cndi:  # 六華(7)聴牌
+            return self.p_choice(self.pickup_rikka1_cndi)
+        if self.pickup_rikka2_cndi:  # 六華(7)一向聴
+            return self.p_choice(self.pickup_rikka2_cndi)
+        if self.win_sc>=4:  # 輝光(5)アガり,三対(5)アガり,三連(4,5)アガり
+            self.win_cfm = True
+            return win_river_n
+        if self.pickup_kikou1_cndi:  # 輝光(5)聴牌
+            return self.p_choice(self.pickup_kikou1_cndi)
+        pickup_cndi = list(set(self.pickup_sanren1_cndi) | set(self.pickup_isshiki1_cndi))
+        if pickup_cndi:  # 三連(3～5)聴牌,一色(1～3)聴牌
+            return self.p_choice(pickup_cndi)
+        if self.river_back:  # 裏
+            return self.p_choice(self.river_back)
+        if self.win_sc:  # 三連(3)アガり,一色(1～3)アガり
+            self.win_cfm = True
+            return win_river_n
+        return pyxel.rndi(0,len(self.river)-1)  # 全て表
+
+    def win_or_dicard_rikka(self, hand):  # アガる／捨てる戦略：六華(7)
+        if self.win_sc>=7:  # 無双(9)アガり,六華(7)アガり,三対(7,9,11)アガり
+            return -1  # アガり
+        if 2 in self.musou_cndi:  # 無双(9)聴牌
+            return self.select_discard(self.musou_cndi)
+        if 2 in self.rikka_cndi:  # 六華(7)聴牌
+            return self.select_discard(self.rikka_cndi)
+        if 1 in self.rikka_cndi:  # 六華(7)一向聴
+            return self.select_discard(self.rikka_cndi)
+        if self.win_sc>=4:  # 輝光(5)アガり,三対(5)アガり,三連(4,5)アガり
+            return -1  # アガり
+        if 2 in self.kikou_cndi:  # 輝光(5)聴牌
+            return self.select_discard(self.kikou_cndi)
+        if 2 in self.sanren_cndi or 2 in self.isshiki_cndi:  # 三連(3～5)聴牌,一色(1～3)聴牌
+            cndi = [1 if x==2 or y==2 else 0 for x,y in zip(self.sanren_cndi,self.isshiki_cndi)]
+            self.consoleout_text(f'P{self.turn} 三連(3～5)聴牌,一色(1～3)聴牌 {cndi}')  # __DEBUG__
+            return self.select_discard(cndi)
         sum_cndi = [0]*len(self.musou_cndi)
         if self.rule_musou and self.musou_cndi[0]>=0:
             self.list_add(sum_cndi, self.musou_cndi, 4)
@@ -782,10 +711,56 @@ class App:
             self.list_add(sum_cndi, self.isshiki_cndi, 3)
         self.list_add(sum_cndi, self.bonus_cndi)
         self.list_add(sum_cndi, self.niren_cndi, 2)
-        self.consoleout_discard('六華', sum_cndi, 4, 5, 3, 3, 4, 2, 3, 1, 2)
+        self.consoleout_discard('六華', sum_cndi, 4, 5, 3, 3, 4, 2, 3, 1, 2)  # __DEBUG__
         return self.select_discard(sum_cndi)
 
-    def discard_sanren(self):
+    def pickup_sanren(self, win_river_n):  # 取る戦略：三連(3～5)
+        if self.win_sc>=7:  # 無双(9)アガり,六華(7)アガり,三対(7,9,11)アガり
+            self.win_cfm = True
+            return win_river_n
+        if self.pickup_musou1_cndi:  # 無双(9)聴牌
+            return self.p_choice(self.pickup_musou1_cndi)
+        if self.pickup_rikka1_cndi:  # 六華(7)聴牌
+            return self.p_choice(self.pickup_rikka1_cndi)
+        if self.win_sc>=4:  # 輝光(5)アガり,三対(5)アガり,三連(4,5)アガり
+            self.win_cfm = True
+            return win_river_n
+        pickup_cndi = list(set(self.pickup_kikou1_cndi) | set(self.pickup_santsui1_cndi))
+        if pickup_cndi:  # 輝光(5)聴牌+三対(5)聴牌
+            return self.p_choice(pickup_cndi)
+        if self.win_sc>=3:  # 三連(3)アガり,一色(3)アガり
+            self.win_cfm = True
+            return win_river_n
+        if self.pickup_sanren1_cndi:  # 三連(3～5)聴牌
+            return self.p_choice(self.pickup_sanren1_cndi)
+        if self.pickup_sanren2_cndi:  # 三連(3～5)一向聴
+            return self.p_choice(self.pickup_sanren2_cndi)
+        if self.river_back:  # 裏
+            return self.p_choice(self.river_back)
+        if self.win_sc:  # アガり一色(1,2)
+            self.win_cfm = True
+            return win_river_n
+        return pyxel.rndi(0,len(self.river)-1)  #   # 全て表
+
+    def win_or_discard_sanren(self, hand):  # アガる／捨てる戦略：三連(3～5)
+        if self.win_sc>=7:  # 無双(9)アガり,六華(7)アガり,三対(7,9,11)アガり
+            return -1  # アガり
+        if 2 in self.musou_cndi:  # 無双(9)聴牌
+            return self.select_discard(self.musou_cndi)
+        if 2 in self.rikka_cndi:  # 六華(7)聴牌
+            return self.select_discard(self.rikka_cndi)
+        if self.win_sc>=4:  # 輝光(5)アガり,三対(5)アガり,三連(4,5)アガり
+            return -1  # アガり
+        if 2 in self.kikou_cndi or 2 in self.santsui_cndi:  # 輝光(5)聴牌,三対(5)聴牌
+            cndi = [1 if x==2 or y==2 else 0 for x,y in zip(self.kikou_cndi,self.santsui_cndi)]
+            self.consoleout_text(f'P{self.turn} 輝光(5)聴牌,三対(5)聴牌 {cndi}')  # __DEBUG__
+            return self.select_discard(cndi)
+        if self.win_sc>=3:  # 三連(3)アガり,一色(3)アガり
+            return -1  # アガり
+        if 2 in self.sanren_cndi:  # 三連(3～5)聴牌
+            return self.select_discard(self.sanren_cndi)
+        if 1 in self.sanren_cndi:  # 三連(3～5)一向聴
+            return self.select_discard(self.sanren_cndi)
         sum_cndi = [0]*len(self.musou_cndi)
         if self.rule_musou and self.musou_cndi[0]>=0:
             self.list_add(sum_cndi, self.musou_cndi, 4)
@@ -803,10 +778,61 @@ class App:
             self.list_add(sum_cndi, self.isshiki_cndi, 2)
         self.list_add(sum_cndi, self.bonus_cndi)
         self.list_add(sum_cndi, self.niren_cndi, 2)
-        self.consoleout_discard('三連', sum_cndi, 4, 4, 3, 3, 4, 2, 2, 1, 2)
+        self.consoleout_discard('三連', sum_cndi, 4, 4, 3, 3, 4, 2, 2, 1, 2)  # __DEBUG__
         return self.select_discard(sum_cndi)
 
-    def discard_isshiki(self):
+    def pickup_isshiki(self, win_river_n):  # 取る戦略：一色(1～3)
+        if self.win_sc>=7 or (self.win_hn==HN_ISSHIKI and self.win_sc>=2):  # 無双(9)アガり,六華(7)アガり,三対(7,9,11)アガり,一色(2,3)アガり
+            self.win_cfm = True
+            return win_river_n
+        if self.pickup_musou1_cndi:  # 無双(9)聴牌
+            return self.p_choice(self.pickup_musou1_cndi)
+        if self.pickup_rikka1_cndi:  # 六華(7)聴牌
+            return self.p_choice(self.pickup_rikka1_cndi)
+        if self.win_sc>=4:  # 輝光(5)アガり,三対(5)アガり,三連(4,5)アガり
+            self.win_cfm = True
+            return win_river_n
+        pickup_cndi = list(set(self.pickup_kikou1_cndi) | set(self.pickup_santsui1_cndi))
+        if pickup_cndi:  # 輝光(5)聴牌+三対(5)聴牌
+            return self.p_choice(pickup_cndi)
+        if self.win_sc>=3:  # 三連(3)アガり,一色(3)アガり
+            self.win_cfm = True
+            return win_river_n
+        pickup_cndi = list(set(self.pickup_sanren1_cndi) | set(self.pickup_isshiki1_cndi))
+        if pickup_cndi:  # 三連(3～5)聴牌+一色(1～3)聴牌
+            return self.p_choice(pickup_cndi)
+        if self.pickup_isshiki2_cndi:  # 一色(1～3)一向聴
+            return self.p_choice(self.pickup_isshiki2_cndi)
+        if self.river_back:  # 裏
+            return self.p_choice(self.river_back)
+        if self.win_sc:  # アガり一色(1)
+            self.win_cfm = True
+            return win_river_n
+        return pyxel.rndi(0,len(self.river)-1)  #   # 全て表
+
+    def win_or_discard_isshiki(self, hand):  # アガる／捨てる戦略：一色(1～3)
+        if self.win_sc>=7 or (self.win_hn==HN_ISSHIKI and self.win_sc>=2):  # 無双(9)アガり,六華(7)アガり,三対(7,9,11)アガり,一色(2,3)アガり
+            return -1  # アガり
+        if 2 in self.musou_cndi:  # 無双(9)聴牌
+            return self.select_discard(self.musou_cndi)
+        if 2 in self.rikka_cndi:  # 六華(7)聴牌
+            return self.select_discard(self.rikka_cndi)
+        if 1 in self.rikka_cndi:  # 六華(7)一向聴
+            return self.select_discard(self.rikka_cndi)
+        if self.win_sc>=4:  # 輝光(5)アガり,三対(5)アガり,三連(4,5)アガり
+            return -1  # アガり
+        if 2 in self.kikou_cndi or 2 in self.santsui_cndi:  # 輝光(5)聴牌,三対(5)聴牌
+            cndi = [1 if x==2 or y==2 else 0 for x,y in zip(self.kikou_cndi,self.santsui_cndi)]
+            self.consoleout_text(f'P{self.turn} 輝光(5)聴牌,三対(5)聴牌 {cndi}')  # __DEBUG__
+            return self.select_discard(cndi)
+        if self.win_sc>=3:  # 三連(3)アガり,一色(3)アガり
+            return -1  # アガり
+        if 2 in self.sanren_cndi or 2 in self.isshiki_cndi:  # 三連(3～5)聴牌,一色(1～3)聴牌
+            cndi = [1 if x==2 or y==2 else 0 for x,y in zip(self.sanren_cndi,self.isshiki_cndi)]
+            self.consoleout_text(f'P{self.turn} 三連(3～5)聴牌,一色(1～3)聴牌 {cndi}')  # __DEBUG__
+            return self.select_discard(cndi)
+        if 1 in self.isshiki_cndi:  # 一色(1～3)一向聴
+            return self.select_discard(self.isshiki_cndi)
         sum_cndi = [0]*len(self.musou_cndi)
         if self.rule_musou and self.musou_cndi[0]>=0:
             self.list_add(sum_cndi, self.musou_cndi, 4)
@@ -824,21 +850,47 @@ class App:
             self.list_add(sum_cndi, self.isshiki_cndi, 4)
         self.list_add(sum_cndi, self.bonus_cndi)
         self.list_add(sum_cndi, self.niren_cndi, 2)
-        self.consoleout_discard('一色', sum_cndi, 4, 4, 3, 3, 3, 2, 4, 1, 2)
+        self.consoleout_discard('一色', sum_cndi, 4, 4, 3, 3, 3, 2, 4, 1, 2)  # __DEBUG__
         return self.select_discard(sum_cndi)
 
-    def discard_isshiki2(self, hand):  # 未使用
-        sum_cndi = [0]*len(hand)  #　捨てる候補
-        flat = [i for tile in hand for i in tile]  # 平坦化
-        ct = [flat.count(i) for i in range(1,7)]  # 要素数
-        md = [i+1 for i,c in enumerate(ct) if c==max(ct)]  # 最頻値
-        for m in md:
-            for i,tile in enumerate(hand):
-                if tile[0]!=m and tile[1]!=m:
-                    sum_cndi[i] += 1
-        return self.select_discard(sum_cndi)
+    def pickup_musou(self, hand_bonus, win_river_n):  # 取る戦略：無双(9)
+        if self.win_sc>=7:  # 無双(9)アガり,六華(7)アガり,三対(7,9,11)アガり
+            self.win_cfm = True
+            return win_river_n
+        if self.pickup_musou1_cndi:  # 無双(9)聴牌
+            return self.p_choice(self.pickup_musou1_cndi)
+        if self.pickup_rikka1_cndi:  # 六華(7)聴牌
+            return self.p_choice(self.pickup_rikka1_cndi)
+        if self.pickup_musou2_cndi:  # 無双(9)一向聴
+            return self.p_choice(self.pickup_musou2_cndi)
+        if self.win_sc>=4:  # 輝光(5)アガり,三対(5)アガり,三連(4,5)アガり
+            self.win_cfm = True
+            return win_river_n
+        if self.pickup_kikou1_cndi:  # 輝光(5)聴牌
+            return self.p_choice(self.pickup_kikou1_cndi)
+        bonus_num = hand_bonus+len(self.pickup_bonus_cndi)
+        if self.pickup_bonus_cndi and bonus_num>=4:
+            return self.p_choice(self.pickup_bonus_cndi)
+        if self.river_back:  # 裏
+            return self.p_choice(self.river_back)
+        if self.win_sc:  # 三連(3)アガり,一色(1～3)アガり
+            self.win_cfm = True
+            return win_river_n
+        return pyxel.rndi(0,len(self.river)-1)  # 全て表
 
-    def discard_musou(self):
+    def win_or_discard_musou(self, hand):  # アガる／捨てる戦略：無双(9)
+        if self.win_sc>=7:  # 無双(9)アガり,六華(7)アガり,三対(7,9,11)アガり
+            return -1  # アガり
+        if 2 in self.musou_cndi:  # 無双(9)聴牌
+            return self.select_discard(self.musou_cndi)
+        if 2 in self.rikka_cndi:  # 六華(7)聴牌
+            return self.select_discard(self.rikka_cndi)
+        if 1 in self.musou_cndi:  # 無双(9)一向聴
+            return self.select_discard(self.musou_cndi)
+        if self.win_sc>=4:  # 輝光(5)アガり,三対(5)アガり,三連(4,5)アガり
+            return -1  # アガり
+        if 2 in self.kikou_cndi:  # 輝光(5)聴牌
+            return self.select_discard(self.kikou_cndi)
         sum_cndi = [0]*len(self.musou_cndi)
         if self.rule_musou and self.musou_cndi[0]>=0:
             self.list_add(sum_cndi, self.musou_cndi, 2)
@@ -848,10 +900,114 @@ class App:
             self.list_add(sum_cndi, self.isshiki_cndi)
         self.list_add(sum_cndi, self.bonus_cndi, 3)
         self.list_add(sum_cndi, self.niren_cndi)
-        self.consoleout_discard('無双', sum_cndi, 2, 1, 1, 1, 1, 1, 1, 2, 1)
+        self.consoleout_discard('無双', sum_cndi, 2, 1, 1, 1, 1, 1, 1, 2, 1)  # __DEBUG__
         return self.select_discard(sum_cndi)
 
-    def discard_santsui(self):
+    def pickup_kikou(self, hand_bonus, win_river_n):  # 取る戦略：輝光(5)
+        if self.win_sc>=7:  # 無双(9)アガり,六華(7)アガり,三対(7,9,11)アガり
+            self.win_cfm = True
+            return win_river_n
+        if self.pickup_musou1_cndi:  # 無双(9)聴牌
+            return self.p_choice(self.pickup_musou1_cndi)
+        if self.pickup_rikka1_cndi:  # 六華(7)聴牌
+            return self.p_choice(self.pickup_rikka1_cndi)
+        if self.pickup_musou2_cndi:  # 無双(9)一向聴
+            return self.p_choice(self.pickup_musou2_cndi)
+        if self.win_sc>=4:  # 輝光(5)アガり,三対(5)アガり,三連(4,5)アガり
+            self.win_cfm = True
+            return win_river_n
+        if self.pickup_kikou1_cndi:  # 輝光(5)聴牌
+            return self.p_choice(self.pickup_kikou1_cndi)
+        if self.pickup_kikou2_cndi:  # 輝光(5)一向聴
+            return self.p_choice(self.pickup_kikou2_cndi)
+        bonus_num = hand_bonus+len(self.pickup_bonus_cndi)
+        if self.pickup_bonus_cndi and bonus_num>=4:
+            return self.p_choice(self.pickup_bonus_cndi)
+        if self.river_back:  # 裏
+            return self.p_choice(self.river_back)
+        if self.win_sc:  # 三連(3)アガり,一色(1～3)アガり
+            self.win_cfm = True
+            return win_river_n
+        return pyxel.rndi(0,len(self.river)-1)  # 全て表
+
+    def win_or_discard_kikou(self, hand):  # アガる／捨てる戦略：輝光(5)／基本
+        if self.win_sc>=7:  # 無双(9)アガり,六華(7)アガり,三対(7,9,11)アガり
+            return -1  # アガり
+        if 2 in self.musou_cndi:  # 無双(9)聴牌
+            return self.select_discard(self.musou_cndi)
+        if 2 in self.rikka_cndi:  # 六華(7)聴牌
+            return self.select_discard(self.rikka_cndi)
+        if 1 in self.musou_cndi:  # 無双(9)一向聴
+            return self.select_discard(self.musou_cndi)
+        if self.win_sc>=4:  # 輝光(5)アガり,三対(5)アガり,三連(4,5)アガり
+            return -1  # アガり
+        if 2 in self.kikou_cndi:  # 輝光(5)聴牌
+            return self.select_discard(self.kikou_cndi)
+        if 1 in self.kikou_cndi:  # 輝光(5)一向聴
+            return self.select_discard(self.kikou_cndi)
+        sum_cndi = [0]*len(self.musou_cndi)
+        if self.rule_musou and self.musou_cndi[0]>=0:
+            self.list_add(sum_cndi, self.musou_cndi, 4)
+        if self.rikka_cndi[0]>=0:
+            self.list_add(sum_cndi, self.rikka_cndi, 4)
+        if self.rule_kikou and self.kikou_cndi[0]>=0:
+            self.list_add(sum_cndi, self.kikou_cndi, 3)
+        if self.rule_santsui and self.santsui_cndi[0]>=0:
+            self.list_add(sum_cndi, self.santsui_cndi, 3)
+        if self.sanren_cndi[0]>=0:
+            self.list_add(sum_cndi, self.sanren_cndi, 3)
+        if self.rule_sanshiki and self.sanshiki_cndi[0]>=0:
+            self.list_add(sum_cndi, self.sanshiki_cndi, 2)
+        if self.isshiki_cndi[0]>=0:
+            self.list_add(sum_cndi, self.isshiki_cndi, 2)
+        self.list_add(sum_cndi, self.bonus_cndi)
+        self.list_add(sum_cndi, self.niren_cndi)
+        self.consoleout_discard('基本', sum_cndi, 4, 4, 3, 3, 3, 2, 2, 1, 1)  # __DEBUG__
+        return self.select_discard(sum_cndi)
+
+    def pickup_santsui(self, win_river_n):  # 取る戦略：三対(5,7,9,11)
+        if self.win_sc>=7:  # 無双(9)アガり,六華(7)アガり,三対(7,9,11)アガり
+            self.win_cfm = True
+            return win_river_n
+        if self.pickup_musou1_cndi:  # 無双(9)聴牌
+            return self.p_choice(self.pickup_musou1_cndi)
+        if self.pickup_rikka1_cndi:  # 六華(7)聴牌
+            return self.p_choice(self.pickup_rikka1_cndi)
+        if self.pickup_musou2_cndi:  # 無双(9)一向聴
+            return self.p_choice(self.pickup_musou2_cndi)
+        if self.win_sc>=4:  # 輝光(5)アガり,三対(5)アガり,三連(4,5)アガり
+            self.win_cfm = True
+            return win_river_n
+        if self.pickup_kikou1_cndi:  # 輝光(5)聴牌
+            return self.p_choice(self.pickup_kikou1_cndi)
+        if self.pickup_santsui1_cndi:  # 三対(5,7,9,11)聴牌
+            return self.p_choice(self.pickup_santsui1_cndi)
+        if self.pickup_santsui2_cndi:  # 三対(5,7,9,11)一向聴
+            return self.p_choice(self.pickup_santsui2_cndi)
+        if self.river_back:  # 裏
+            return self.p_choice(self.river_back)
+        if self.win_sc:  # 三連(3)アガり,一色(1～3)アガり
+            self.win_cfm = True
+            return win_river_n
+        return pyxel.rndi(0,len(self.river)-1)  # 全て表
+
+    def win_or_discard_santsui(self, hand):  # アガる／捨てる戦略：三対(5,7,9,11)
+        if self.win_sc>=7:  # 無双(9)アガり,六華(7)アガり,三対(7,9,11)アガり
+            return -1  # アガり
+        if 2 in self.musou_cndi:  # 無双(9)聴牌
+            return self.select_discard(self.musou_cndi)
+        if 2 in self.rikka_cndi:  # 六華(7)聴牌
+            return self.select_discard(self.rikka_cndi)
+        if 1 in self.musou_cndi:  # 無双(9)一向聴
+            return self.select_discard(self.musou_cndi)
+        if self.win_sc>=4:  # 輝光(5)アガり,三対(5)アガり,三連(4,5)アガり
+            return -1  # アガり
+        if 2 in self.kikou_cndi:  # 輝光(5)聴牌
+            return self.select_discard(self.kikou_cndi)
+        if 2 in self.santsui_cndi:  # 三対(5,7,9,11)聴牌
+            return self.select_discard(self.santsui_cndi)
+        if 1 in self.santsui_cndi:  # 三対(5,7,9,11)一向聴
+            return self.select_discard(self.santsui_cndi)
         sum_cndi = [0]*len(self.musou_cndi)
         if self.rule_musou and self.musou_cndi[0]>=0:
             self.list_add(sum_cndi, self.musou_cndi, 4)
@@ -869,18 +1025,93 @@ class App:
             self.list_add(sum_cndi, self.isshiki_cndi, 2)
         self.list_add(sum_cndi, self.bonus_cndi, 2)
         self.list_add(sum_cndi, self.niren_cndi)
-        self.consoleout_discard('三対', sum_cndi, 4, 4, 3, 5, 3, 2, 2, 2, 1)
+        self.consoleout_discard('三対', sum_cndi, 4, 4, 3, 5, 3, 2, 2, 2, 1)  # __DEBUG__
         return self.select_discard(sum_cndi)
 
-    def river_bonus(self):  # 河表牌のボーナス牌
-        bonus = []
+    def generate_pickup_cndi(self, hand):
+        self.pickup_rikka1_cndi, self.pickup_rikka2_cndi, self.pickup_sanren1_cndi, self.pickup_sanren2_cndi, = [], [], [], [] 
+        self.pickup_isshiki1_cndi, self.pickup_isshiki2_cndi, self.pickup_musou1_cndi, self.pickup_musou2_cndi = [], [], [], []
+        self.pickup_kikou1_cndi, self.pickup_kikou2_cndi, self.pickup_bonus_cndi = [], [], []
+        self.pickup_santsui1_cndi, self.pickup_santsui2_cndi, self.pickup_sanshiki_cndi, self.river_back = [], [], [], []
+        self.win_hn, self.win_sc = HN_NONE, 0
+        win_river_n = DISABLE
+        hand_bonus = self.chk_bonus(hand)  # 手牌ボーナス牌
         for i,tile in enumerate(self.dsp_river):
             river_n = tile[0]
-            if river_n!=DISABLE and tile[3] and self.river[river_n][0]==self.river[river_n][1]:  # 存在+表+ボーナス
-                bonus.append(river_n)
-        return bonus
+            if river_n!=DISABLE:  # 存在
+                if tile[3]:  # 表
+                    h = [x[:] for x in hand]
+                    h.append([self.river[tile[0]][0],self.river[tile[0]][1]])
+                    hn, sc = self.chk_hand(h)
+                    if sc>self.win_sc:
+                        self.win_hn = hn
+                        self.win_sc = sc
+                        win_river_n = tile[0]
+                    rikka_cndi = self.thkg_rikka(h)
+                    if 2 in rikka_cndi and rikka_cndi[-1]!=2:  # 六華(7)聴牌
+                        self.pickup_rikka1_cndi.append(river_n)
+                    if 1 in rikka_cndi and rikka_cndi[-1]!=1:  # 六華(7)一向聴
+                        self.pickup_rikka2_cndi.append(river_n)
+                    sanren_cndi, _niren_cndi = self.thkg_sanren(h)
+                    if 2 in sanren_cndi and sanren_cndi[-1]!=2:  # 三連(3～5)聴牌
+                        self.pickup_sanren1_cndi.append(river_n)
+                    if 1 in sanren_cndi and sanren_cndi[-1]!=2:  # 三連(3～5)一向聴
+                        self.pickup_sanren2_cndi.append(river_n)
+                    isshiki_cndi = self.thkg_isshiki(h)
+                    if 2 in isshiki_cndi and isshiki_cndi[-1]!=2:  # 一色(1～3)聴牌
+                        self.pickup_isshiki1_cndi.append(river_n)
+                    if 1 in isshiki_cndi and isshiki_cndi[-1]!=1:  # 一色(1～3)一向聴
+                        self.pickup_isshiki2_cndi.append(river_n)
+                    if self.rule_musou:  # 無双ルールあり
+                        musou_cndi = self.thkg_musou(h)
+                        if 2 in musou_cndi and musou_cndi[-1]!=2:  # 無双(9)聴牌
+                            self.pickup_musou1_cndi.append(river_n)
+                        if 1 in musou_cndi and musou_cndi[-1]!=1:  # 無双(9)一向聴
+                            self.pickup_musou2_cndi.append(river_n)
+                    if self.rule_kikou:  # 輝光ルールあり
+                        kikou_cndi, bonus_cndi = self.thkg_kikou(h)
+                        if 2 in kikou_cndi and kikou_cndi[-1]!=2:  # 輝光(5)聴牌
+                            self.pickup_kikou1_cndi.append(river_n)
+                        if 1 in kikou_cndi and kikou_cndi[-1]!=1:  # 輝光(5)一向聴
+                            self.pickup_kikou2_cndi.append(river_n)
+                        if 1 in bonus_cndi and bonus_cndi[-1]!=1:  # ボーナス
+                            self.pickup_bonus_cndi.append(river_n)
+                    if self.rule_santsui:  # 三対ルールあり
+                        santsui_cndi = self.thkg_santsui(h)
+                        if 2 in santsui_cndi and santsui_cndi[-1]!=2:  # 三対(5,7,9,11)聴牌
+                            self.pickup_santsui1_cndi.append(river_n)
+                        if 1 in santsui_cndi and santsui_cndi[-1]!=1:  # 三対(5,7,9,11)一向聴
+                            self.pickup_santsui2_cndi.append(river_n)
+                    if self.rule_sanshiki:  # 三色ルールあり
+                        sanshiki_cndi = self.thkg_sanshiki(h)
+                        if 2 in sanshiki_cndi and sanshiki_cndi[-1]!=2:  # 三色(3)聴牌
+                            self.pickup_sanshiki_cndi.append(river_n)
+                else:  # 裏
+                    self.river_back.append(river_n)
+        return win_river_n
 
-    def com_discard(self, hand):  # 【戦略】どれを捨てるか
+    def com_pickup(self, hand):  # 【戦略】どれを取る
+        win_river_n = self.generate_pickup_cndi(hand)
+        hand_bonus = self.chk_bonus(hand)  # 手牌ボーナス牌
+        self.win_cfm = False
+        if self.tactic[self.turn]==TA_RIKKA:  # 取る戦略：六華(7)
+            return self.pickup_rikka(win_river_n)
+        elif self.tactic[self.turn]==TA_SANREN:  # 取る戦略：三連(3～5)
+            return self.pickup_sanren(win_river_n)
+        elif self.tactic[self.turn]==TA_ISSHIKI:  # 取る戦略：一色(1～3)
+            return self.pickup_isshiki(win_river_n)
+        elif self.tactic[self.turn]==TA_MUSOU:  # 取る戦略：無双(9)
+            if self.rule_musou:
+                return self.pickup_musou(hand_bonus, win_river_n)
+        elif self.tactic[self.turn]==TA_KIKOU:  # 取る戦略：輝光(5)
+            if self.rule_kikou:
+                return self.pickup_kikou(hand_bonus, win_river_n)
+        elif self.tactic[self.turn]==TA_SANTSUI:  # 取る戦略：三対(5,7,9,11)
+            if self.rule_santsui:
+                return self.pickup_santsui(win_river_n)
+        return self.pickup_common(win_river_n)  # 取る戦略：基本
+
+    def generate_discard_cndi(self, hand):
         self.musou_cndi = self.thkg_musou(hand)
         self.rikka_cndi = self.thkg_rikka(hand)
         self.kikou_cndi, self.bonus_cndi = self.thkg_kikou(hand)
@@ -888,57 +1119,22 @@ class App:
         self.sanren_cndi, self.niren_cndi = self.thkg_sanren(hand)
         self.sanshiki_cndi = self.thkg_sanshiki(hand)
         self.isshiki_cndi = self.thkg_isshiki(hand)
-        bonus_num = self.chk_bonus(hand)+len(self.river_bonus())  # 手牌ボーナス牌+河表牌ボーナス牌
-        if self.tactic[self.turn]==TA_RIKKA:
-            return self.discard_rikka()
-        if self.tactic[self.turn]==TA_SANREN:
-            return self.discard_sanren()
-        if self.tactic[self.turn]==TA_ISSHIKI:
-            return self.discard_isshiki()
-        if self.tactic[self.turn] in (TA_MUSOU, TA_KIKOU):
-            if bonus_num>=4:
-                return self.discard_musou()
-            else:
-                return self.discard_common()
-        if self.tactic[self.turn]==TA_SANTSUI:
-            return self.discard_santsui()
-        return self.discard_common()
+        if self.pickedtileface:  # 表牌ツモならその牌は捨てない
+            self.musou_cndi[-1], self.rikka_cndi[-1], self.kikou_cndi[-1], self.bonus_cndi[-1], self.santsui_cndi[-1] = 0, 0, 0, 0, 0 
+            self.sanren_cndi[-1], self.niren_cndi[-1], self.sanshiki_cndi[-1], self.isshiki_cndi[-1] = 0, 0, 0, 0
 
-    def chk_1by1(self, hand, tsuide=False):
-        max_sc, river_n = 0, DISABLE
+    def chk_1by1(self, hand, tsuide=False):  # 河牌１つずつ役確認
+        cfm_hn, max_sc, river_n = HN_NONE, 0, DISABLE
         for i,tile in enumerate(self.dsp_river):
             if tile[0]!=DISABLE and tile[3]:  # 存在+表
                 h1 = [x[:] for x in hand]
                 h1.append([self.river[tile[0]][0],self.river[tile[0]][1]])
                 hn, sc = self.chk_hand(h1, tsuide)
                 if sc>max_sc:
+                    cfm_hn = hn
                     max_sc = sc
                     river_n = tile[0]
-        return max_sc, river_n
-
-    def win_or_not(self, hand, sc):  # 【戦略】アガるか高得点を目指すか
-        musou_cndi = self.thkg_musou(hand)
-        if self.rule_musou and 2 in musou_cndi:  # ルールあり＋無双(9)一向聴
-            if self.tactic[self.turn]==TA_MUSOU or pyxel.rndi(0,1)==0:
-                self.consoleout_text('高得点（無双）狙う')
-                return False
-            else:
-                self.consoleout_text('高得点（無双）狙わずアガり')
-        rikka_cndi = self.thkg_rikka(hand)
-        if 2 in rikka_cndi:  # 六華(7)一向聴
-            if self.tactic[self.turn]==TA_RIKKA or pyxel.rndi(0,1)==0:
-                self.consoleout_text('高得点（六華）狙う')
-                return False
-            else:
-                self.consoleout_text('高得点（六華）狙わずアガり')
-        santsui_cndi = self.thkg_santsui(hand)
-        if self.rule_santsui and 2 in santsui_cndi and sc<5:  # ルールあり＋三対(5)一向聴
-            if self.tactic[self.turn]==TA_SANTSUI or pyxel.rndi(0,1)==0:
-                self.consoleout_text('高得点（三対）狙う')
-                return False
-            else:
-                self.consoleout_text('高得点（三対）狙わずアガり')
-        return True
+        return cfm_hn, max_sc, river_n
 
     def del_dspriver(self, dsp_river_n): # 河牌表示番号(0～24)から河牌を削除
         river_n = self.dsp_river[dsp_river_n][0]  # 河表示番号(0～24)から河牌番号(0～21)
@@ -956,7 +1152,10 @@ class App:
 
     def chara_own_pickup_msg(self, tile): #  自分選択時の取るメッセージ
         pyxel.play(3, 3)  # 選択音
-        msg = f'${tile[0]}{tile[1]}'+self.p_choice(MSG_OWN_PICKONE)
+        if tile[0]<1:  # 裏
+            msg = self.p_choice(MSG_OWN_PICK)
+        else:  # 表
+            msg = f'${tile[0]}{tile[1]}'+self.p_choice(MSG_OWN_PICKONE)
         self.balloon.clear()
         self.balloon.append(Balloon(*MSG_XY[OWN], OWN, msg, tm=50))
 
@@ -984,6 +1183,11 @@ class App:
         msg += '\n*A10点 終了' if self.rule_10pt else '\n*B２周 終了'
         self.balloon.append(Balloon(19, HEIGHT-8, OWN, msg, tm=200))
 
+    def score_msg(self):  # スコアボタン押下メッセージ
+        pyxel.play(3, 3)  # 選択音
+        msg = f'*7連チャン\n現在 *A{self.consecutive_round}*7 回 *A{self.consecutive_score}*7点'
+        self.balloon.append(Balloon(CHARA_XY[OWN][0]+20, CHARA_XY[OWN][1]-8, OWN, msg, tm=100))
+
     def chara_opp_msg(self, chara_n):  # 相手選択時のメッセージ
         pyxel.play(3, 3)  # 選択音
         msg = '*5'+CHARA_NAME[self.chara[chara_n]]
@@ -991,7 +1195,22 @@ class App:
             #msg += '\n'
             for tile in self.obvi_hand[chara_n]:
                 msg += f'${tile[0]}{tile[1]}'
-        msg += '\n*7'+self.p_choice(MSG_OPP_CHARA)
+        if len(self.river_back)>18 and pyxel.rndi(0,3)==0:  # 序盤
+            msg += '\n*7'+self.p_choice(MSG_OPP_OPENING)
+        elif len(self.river_back)<9 and pyxel.rndi(0,3)==0:  # 終盤
+            msg += '\n*7'+self.p_choice(MSG_OPP_CLOSING)
+        else:
+            if pyxel.rndi(0,3)==0 and \
+                    (CAHAR_TACTIC[self.chara[chara_n]] in (TA_RIKKA,TA_SANREN,TA_ISSHIKI) or \
+                    (CAHAR_TACTIC[self.chara[chara_n]]==TA_MUSOU and self.rule_musou) or \
+                    (CAHAR_TACTIC[self.chara[chara_n]]==TA_KIKOU and self.rule_kikou) or \
+                    (CAHAR_TACTIC[self.chara[chara_n]]==TA_SANTSUI and self.rule_santsui)):
+                if pyxel.rndi(0,1)==0:
+                    msg += '\n*7'+self.p_choice(MSG_OPP_HAND_PRE)+'*A'+MSG_HANDNAME[CAHAR_TACTIC[self.chara[chara_n]]]+'*7です'
+                else:
+                    msg += '\n*A'+MSG_HANDNAME[CAHAR_TACTIC[self.chara[chara_n]]]+'*7'+self.p_choice(MSG_OPP_HAND_POST)
+            else:
+                msg += '\n*7'+self.p_choice(MSG_OPP_CHARA)
         self.balloon.append(Balloon(*MSG_XY[chara_n], chara_n, msg, tm=50))
 
     def chara_roundend_msg(self, chara_n):  # 自分選択時のラウンド終了メッセージ
@@ -999,7 +1218,15 @@ class App:
         if chara_n==OWN:
             msg = self.p_choice(MSG_OWN_ROUNDWIN if self.addscore[OWN] else MSG_OWN_ROUNDLOSE)
         else:
-            msg = '*5'+CHARA_NAME[self.chara[chara_n]]+'*7\n'+self.p_choice(MSG_OPP_ROUNDWIN if self.addscore[chara_n] else MSG_OPP_ROUNDLOSE)
+            msg = '*5'+CHARA_NAME[self.chara[chara_n]]+'*7\n'
+            if self.addscore[chara_n]:  # 勝ち
+                #if pyxel.rndi(0,1)==0:
+                if self.win_handname[chara_n]==CAHAR_TACTIC[self.chara[chara_n]]:
+                    msg += self.p_choice(MSG_OPP_ROUNDWIN_PRE)+'*A'+MSG_HANDNAME[self.win_handname[chara_n]]+'*7です'
+                else:
+                    msg += self.p_choice(MSG_OPP_ROUNDWIN)
+            else:  # 負け
+                msg += self.p_choice(MSG_OPP_ROUNDLOSE)
         self.balloon.clear()
         self.balloon.append(Balloon(*MSG_XY[chara_n], chara_n, msg, tm=50))
 
@@ -1095,7 +1322,7 @@ class App:
         self.balloon.append(Balloon(RULE_BTN_XY[RL_10PT][0]-1,y,P3,txt,tm=120))
 
     def __init__(self):
-        pyxel.init(WIDTH, HEIGHT, title='Rikka 1.1', capture_sec=60)
+        pyxel.init(WIDTH, HEIGHT, title='Rikka 1.2', capture_sec=60)
         pyxel.load('assets/Rikka.pyxres')
         pyxel.mouse(True)
         self.bgm = []
@@ -1109,6 +1336,8 @@ class App:
         self.balloon = []  # 吹き出し
         self.conft = []  # 紙吹雪
         self.reveal = False
+        self.consecutive_highround, self.consecutive_round = 0, 0
+        self.consecutive_highscore, self.consecutive_score = 0, 0
         self.ruleset()
         self.gamestart()
         pyxel.run(self.update, self.draw)
@@ -1161,13 +1390,13 @@ class App:
                 self.hand[self.tile_n%4].append(self.tile[-1-self.tile_n])
                 self.tile_n += 1
                 if self.tile_n>=20:
-                    #self.hand[OWN] = [[2,1],[2,2],[2,3],[4,2],[2,5]]  # __DEBUG__
-                    #self.hand[P1] = [[1,1],[2,2],[3,3],[4,4],[5,5]]  # __DEBUG__
-                    #self.hand[P3] = [[1,1],[2,2],[3,3],[4,4],[5,5]]  # __DEBUG__
-                    #self.river[0] = [6,6]  # __DEBUG__
-                    #self.river[1] = [2,1]  # __DEBUG__
-                    #self.dsp_river[0] = [0,pyxel.rndi(0,3),pyxel.rndi(0,5),1]  # __DEBUG__
-                    #self.dsp_river[1] = [1,pyxel.rndi(0,3),pyxel.rndi(0,5),1]  # __DEBUG__
+                    #self.hand[OWN] = [[2,1],[2,2],[2,3],[4,2],[2,5]]  # __DEBUG__OWN手牌
+                    #self.hand[P1] = [[1,1],[2,2],[3,3],[4,4],[5,5]]  # __DEBUG__ P1手牌
+                    #self.hand[P3] = [[1,1],[2,2],[3,3],[4,4],[5,5]]  # __DEBUG__ P2手牌
+                    #self.river[0] = [6,6]  # __DEBUG__ 河牌0
+                    #self.river[1] = [2,1]  # __DEBUG__ 河牌1
+                    #self.dsp_river[0] = [0,pyxel.rndi(0,3),pyxel.rndi(0,5),1]  # __DEBUG__ 河牌0表
+                    #self.dsp_river[1] = [1,pyxel.rndi(0,3),pyxel.rndi(0,5),1]  # __DEBUG__ 河牌1表
                     if pyxel.play_pos(0) is None:
                         for ch, sound in enumerate(self.bgm[self.bgm_n]):
                             pyxel.sounds[ch].set(*sound)
@@ -1178,21 +1407,22 @@ class App:
         elif self.st==ST_NEXT:
             self.turn = NEXT[self.turn]  # 次の番
             if self.turn==OWN:
-                self.message_pick(OWN) # 自分取るメッセージ
-                self.max_sc, self.win_river_n = self.pickup_allcandidate(self.hand[OWN])  # 取るアドバイスのため
+                self.message_pick(OWN) # 取るメッセージ, Player, self.pickedtileface
+                self.win_river_n = self.generate_pickup_cndi(self.hand[OWN])  # 取るアドバイスのため
                 self.st = ST_PICK
             else:
                 self.cnt = 0
                 self.st = ST_COM_PICK
         elif self.st==ST_COM_PICK:
             self.cnt += 1
-            if self.cnt==5:  # メッセージ
-                self.message_pick(self.turn) # 相手取るメッセージ
-            elif self.cnt==30:  # 選ぶ
-                pickup_n = self.com_pickup(self.hand[self.turn])
+            if self.cnt==10:  # メッセージ
+                pickup_n = self.com_pickup(self.hand[self.turn])  # 取る牌,上がるかどうか
                 self.pickedtile = self.river[pickup_n][:]
-                self.dsp_river_n = self.river_n2dsp_river_n(pickup_n)  # 河牌番号(0～21)から河表示番号(0～24)
-                self.pickedtileface = self.dsp_river[self.dsp_river_n][3]  # オープン1,クローズ0
+                self.tmp_dsp_river_n = self.river_n2dsp_river_n(pickup_n)  # 河牌番号(0～21)から河表示番号(0～24)
+                self.pickedtileface = self.dsp_river[self.tmp_dsp_river_n][3]  # オープン1,クローズ0
+                self.message_pick(self.turn) # 取るメッセージ, Player, self.pickedtileface
+            elif self.cnt==30:  # 選ぶ
+                self.dsp_river_n = self.tmp_dsp_river_n
                 pyxel.play(3, 7)  # 取る音／捨てる音
             elif self.cnt==50:  # 取る
                 x, y = TILE_XY[self.turn][2]+TILE_XY[self.turn][4]*len(self.hand[self.turn]), TILE_XY[self.turn][3]+TILE_XY[self.turn][5]*len(self.hand[self.turn])
@@ -1209,7 +1439,7 @@ class App:
                 self.hand[self.turn].append(self.pickedtile)
                 if self.pickedtileface:  # オープン1,クローズ0
                     self.obvi_hand[self.turn].append(self.pickedtile)  # 明らかな手牌
-                    self.consoleout_text(f'明らかな手牌：P{self.turn}{self.obvi_hand[self.turn]}')
+                    self.consoleout_text(f'P{self.turn} 手牌 {self.obvi_hand[self.turn]}')  # __DEBUG__
                 pyxel.play(3, 7)  # 取る音／捨てる音
                 self.cnt = 0
                 self.st = ST_COM_DISCARD
@@ -1218,21 +1448,36 @@ class App:
             if self.cnt==10:
                 self.handopen[self.turn][-1] = OP_STAND  # 取った牌を入れる
             elif self.cnt==20:  # アガる／捨てる
-                cfm_hn, add_sc = self.chk_hand(self.hand[self.turn])
-                if not cfm_hn or not self.win_or_not(self.hand[self.turn], add_sc):  # 捨てる
-                    self.discard_n = self.com_discard(self.hand[self.turn])
-                    if self.message_discard(self.turn): # 相手捨てるメッセージ
-                        pass
-                    else:
-                        self.cnt=40
-                else:  # アガる
-                    self.cfmhandname[self.turn], self.addscore[self.turn] = cfm_hn, add_sc
+                self.win_hn, self.win_sc = self.chk_hand(self.hand[self.turn])
+                self.generate_discard_cndi(self.hand[self.turn])
+                if self.tactic[self.turn]==TA_RIKKA:
+                    win_or_dicard = self.win_or_dicard_rikka(self.hand[self.turn])
+                elif self.tactic[self.turn]==TA_SANREN:
+                    win_or_dicard = self.win_or_discard_sanren(self.hand[self.turn])
+                elif self.tactic[self.turn]==TA_ISSHIKI:
+                    win_or_dicard = self.win_or_discard_isshiki(self.hand[self.turn])
+                elif self.tactic[self.turn]==TA_MUSOU and self.rule_musou:
+                    win_or_dicard = self.win_or_discard_musou(self.hand[self.turn])
+                elif self.tactic[self.turn]==TA_KIKOU and self.rule_kikou:
+                    win_or_dicard = self.win_or_discard_kikou(self.hand[self.turn])
+                elif self.tactic[self.turn]==TA_SANTSUI and self.rule_santsui:
+                    win_or_dicard = self.win_or_discard_santsui(self.hand[self.turn])
+                else:
+                    win_or_dicard = self.win_or_discard_common(self.hand[self.turn])
+                if win_or_dicard==-1:  # アガる
+                    self.win_handname[self.turn], self.addscore[self.turn] = self.win_hn, self.win_sc
                     self.hand[self.turn] = [x[:] for x in self.win_sequence]
                     self.win_player = self.turn
                     self.judge_player = self.turn
-                    self.message_win(self.turn) # 相手アガるメッセージ
+                    self.message_win(self.turn, self.win_hn, self.win_sc) # 相手アガるメッセージ
                     self.cnt = 0
                     self.st = ST_JUDGE_OPEN
+                else:  # 捨てる
+                    self.discard_n = win_or_dicard
+                    if self.message_discard(self.turn, self.win_sc): # 相手捨てるメッセージ
+                        pass
+                    else:
+                        self.cnt=40
             elif self.cnt==45:
                 discardtile = self.hand[self.turn][self.discard_n][:]
                 self.handopen[self.turn][self.discard_n] = OP_HIDDEN  # 非表示
@@ -1250,7 +1495,7 @@ class App:
                 discardtile = self.hand[self.turn][self.discard_n]
                 if discardtile in self.obvi_hand[self.turn]:  # 捨てた牌が明らかな手牌に含まれている
                     self.obvi_hand[self.turn].remove(discardtile)  # 明らかな手牌から捨てた牌を削除
-                    self.consoleout_text(f'明らかな手牌：P{self.turn}{self.obvi_hand[self.turn]}')
+                    self.consoleout_text(f'P{self.turn} 手牌 {self.obvi_hand[self.turn]}')  # __DEBUG__
                 del self.hand[self.turn][self.discard_n]
                 self.handopen[self.turn][self.discard_n] = OP_STAND  # 立ち
                 self.discard_n = DISABLE
@@ -1262,6 +1507,7 @@ class App:
                     pyxel.play(3, 4)  # 取消し音
             if pyxel.btnr(pyxel.MOUSE_BUTTON_LEFT):
                 show_rule = self.cur_rule()  # ルールボタン
+                show_score = self.cur_score()  # スコアボタン
                 chara_n = self.cur_chara(pyxel.mouse_x, pyxel.mouse_y)  # キャラクタ枠
                 sort_n = self.cur_sort(pyxel.mouse_x, pyxel.mouse_y)  # ソートボタン
                 rotswap_n = self.cur_rotswap(pyxel.mouse_x, pyxel.mouse_y, len(self.hand[OWN]))  # 回転／交換ボタン
@@ -1271,13 +1517,15 @@ class App:
                 self.dsp_river_n = self.cur_river(pyxel.mouse_x, pyxel.mouse_y)  # カーソル位置から河表示番号(0～24)
                 if chara_n!=DISABLE:  # キャラクタ枠
                     if chara_n==OWN:
-                        pickup_n = self.pickup_common(self.max_sc, self.win_river_n)
+                        pickup_n = self.pickup_common(self.win_river_n)
                         self.dsp_river_n = self.river_n2dsp_river_n(pickup_n)  # 河牌番号(0～21)から河表示番号(0～24)
                         self.chara_own_pickup_msg(self.river[pickup_n] if self.dsp_river[self.dsp_river_n][3] else [0,0])
                     else:
                         self.chara_opp_msg(chara_n)
                 elif show_rule:
                     self.rule_msg()
+                elif show_score:
+                    self.score_msg()
                 elif sort_n!=DISABLE:  # ソート
                     pyxel.play(3, 3)  # 選択音
                     self.hand_sort(self.hand[OWN], sort_n)
@@ -1320,9 +1568,8 @@ class App:
                 self.hand[OWN].append(self.pickedtile)
                 if self.pickedtileface:  # オープン1,クローズ0
                     self.obvi_hand[OWN].append(self.pickedtile)  # 明らかな手牌
-                    self.consoleout_text(f'明らかな手牌：OWN{self.obvi_hand[OWN]}')
-                #self.handopen[OWN][-1] = OP_FACE if self.pickedtileface else OP_STAND
-                #self.hand[OWN] = [[1,1],[2,2],[3,3],[4,4],[5,5],[6,6]]  # アガり確認__DEBUG__
+                    self.consoleout_text(f'P0 手牌 {self.obvi_hand[OWN]}')  # __DEBUG__
+                #self.hand[OWN] = [[1,1],[2,2],[3,3],[4,4],[5,5],[6,6]]  # __DEBUG__ アガり確認
                 self.handname_own, self.handscore_own = self.chk_hand(self.hand[OWN])
                 self.message_discard(OWN, self.handscore_own) # 自分捨てるメッセージ
                 self.st = ST_DISCARD
@@ -1334,6 +1581,7 @@ class App:
             if pyxel.btnr(pyxel.MOUSE_BUTTON_LEFT):
                 self.handopen[OWN][-1] = OP_STAND  # 立ち
                 show_rule = self.cur_rule()  # ルールボタン
+                show_score = self.cur_score()  # スコアボタン
                 chara_n = self.cur_chara(pyxel.mouse_x, pyxel.mouse_y)  # キャラクタ枠
                 sort_n = self.cur_sort(pyxel.mouse_x, pyxel.mouse_y)  # ソートボタン
                 rotswap_n = self.cur_rotswap(pyxel.mouse_x, pyxel.mouse_y, len(self.hand[OWN]))  # 回転／交換ボタン
@@ -1343,24 +1591,22 @@ class App:
                 self.winning_n = self.cur_winning(pyxel.mouse_x, pyxel.mouse_y)  # アガりボタン
                 if chara_n!=DISABLE:  # キャラクタ枠
                     if chara_n==OWN:
-                        if self.handscore_own>6 or (self.handname_own and pyxel.rndi(0,1)==0):
+                        self.pickedtileface = 0  # オープン1,クローズ0
+                        self.win_hn, self.win_sc = self.chk_hand(self.hand[OWN])
+                        self.generate_discard_cndi(self.hand[OWN])
+                        win_or_dicard = self.win_or_discard_common(self.hand[OWN])
+                        if win_or_dicard==-1:
                             self.winning_n = self.handname_own
-                            self.chara_own_win_msg()
+                            self.chara_own_win_msg()  # 自分選択時のアガるメッセージ
                         else:
-                            self.musou_cndi = self.thkg_musou(self.hand[OWN])
-                            self.rikka_cndi = self.thkg_rikka(self.hand[OWN])
-                            self.kikou_cndi, self.bonus_cndi = self.thkg_kikou(self.hand[OWN])
-                            self.santsui_cndi = self.thkg_santsui(self.hand[OWN])
-                            self.sanren_cndi, self.niren_cndi = self.thkg_sanren(self.hand[OWN])
-                            self.sanshiki_cndi = self.thkg_sanshiki(self.hand[OWN])
-                            self.isshiki_cndi = self.thkg_isshiki(self.hand[OWN])
-                            discard_n = self.discard_common()
-                            self.own_n = discard_n
-                            self.chara_own_discard_msg(self.hand[OWN][discard_n])
+                            self.own_n = win_or_dicard
+                            self.chara_own_discard_msg(self.hand[OWN][self.own_n])  # 自分選択時の捨てるメッセージ
                     else:
                         self.chara_opp_msg(chara_n)
                 elif show_rule:
                     self.rule_msg()
+                elif show_score:
+                    self.score_msg()
                 elif sort_n!=DISABLE:  # ソート
                     pyxel.play(3, 3)  # 選択音
                     self.hand_sort(self.hand[OWN], sort_n)
@@ -1389,10 +1635,10 @@ class App:
                         pyxel.play(3, 3)  # 選択音
                         self.hand[OWN] = [x[:] for x in self.win_sequence]
                     else:  # クリック2回目
-                        self.cfmhandname[OWN], self.addscore[OWN] = self.handname_own, self.handscore_own
+                        self.win_handname[OWN], self.addscore[OWN] = self.handname_own, self.handscore_own
                         self.win_player = OWN
                         self.judge_player = OWN
-                        self.message_win(OWN)  # 自分アガるメッセージ
+                        self.message_win(OWN, self.handname_own, self.handscore_own)  # 自分アガるメッセージ
                         self.cnt = 0
                         self.st = ST_JUDGE_OPEN
                 elif self.own_n!=DISABLE:
@@ -1406,7 +1652,7 @@ class App:
                 discardtile = self.hand[self.turn][self.own_n]
                 if discardtile in self.obvi_hand[OWN]:  # 捨てた牌が明らかな手牌に含まれている
                     self.obvi_hand[OWN].remove(discardtile)  # 明らかな手牌から捨てた牌を削除
-                    self.consoleout_text(f'明らかな手牌：OWN{self.obvi_hand[OWN]}')
+                    self.consoleout_text(f'P0 手牌 {self.obvi_hand[OWN]}')  # __DEBUG__
                 del self.hand[OWN][self.own_n]
                 self.handopen[OWN][self.own_n] = OP_STAND  # 立ち
                 self.own_n = DISABLE
@@ -1438,9 +1684,9 @@ class App:
                     pyxel.play(3, 11)  # アガリ音
                     self.st = ST_ROUNDEND
                 else:
-                    sc, self.pickup_n = self.chk_1by1(self.hand[self.judge_player], tsuide=True)
-                    if sc:
-                        self.message_tsuide(self.judge_player)  # ついでに完成メッセージ
+                    cfm_hn, add_sc, self.pickup_n = self.chk_1by1(self.hand[self.judge_player], tsuide=True)
+                    if add_sc:
+                        self.message_tsuide(self.judge_player, cfm_hn, add_sc)  # ついでに完成メッセージ
                     else:
                         self.cnt = 10
             elif self.cnt==40:  # ウェイト
@@ -1453,18 +1699,21 @@ class App:
                 del self.movetile
                 self.handopen[self.judge_player][len(self.hand[self.judge_player])] = OP_FACE  # 倒し表牌
                 self.hand[self.judge_player].append(self.pickedtile)
-                self.cfmhandname[self.judge_player], self.addscore[self.judge_player] = self.chk_hand(self.hand[self.judge_player], tsuide=True)
+                self.win_handname[self.judge_player], self.addscore[self.judge_player] = self.chk_hand(self.hand[self.judge_player], tsuide=True)
                 self.hand[self.judge_player] = [x[:] for x in self.win_sequence]
                 self.cnt = 0
                 self.st = ST_JUDGE
         elif self.st==ST_ROUNDEND:
             if pyxel.btnr(pyxel.MOUSE_BUTTON_LEFT):
                 show_rule = self.cur_rule()  # ルールボタン
+                show_score = self.cur_score()  # スコアボタン
                 chara_n = self.cur_chara(pyxel.mouse_x, pyxel.mouse_y)  # キャラクタ枠
                 if chara_n!=DISABLE:  # キャラクタ枠
                     self.chara_roundend_msg(chara_n)
                 elif show_rule:
                     self.rule_msg()
+                elif show_score:
+                    self.score_msg()
                 else:
                     pyxel.play(3, 3)  # 選択音
                     for p in (OWN, P1, P2, P3):
@@ -1474,7 +1723,15 @@ class App:
                         if OWN in self.win_list:
                             self.confetti = Confetti(0, 0, WIDTH, HEIGHT)  # 紙吹雪
                             pyxel.play(3, 10)  # 勝ち音
+                            self.consecutive_round += 1
+                            if self.consecutive_round>self.consecutive_highround:
+                                self.consecutive_highround = self.consecutive_round
+                            self.consecutive_score += self.score[OWN]
+                            if self.consecutive_score>self.consecutive_highscore:
+                                self.consecutive_highscore = self.consecutive_score
                         else:
+                            self.consecutive_round = 0
+                            self.consecutive_score = 0
                             pyxel.play(3, 12)  # 負け音
                         self.st = ST_GAMEEND
                     else:
@@ -1486,11 +1743,14 @@ class App:
                 self.confetti.update()
             if pyxel.btnr(pyxel.MOUSE_BUTTON_LEFT):
                 show_rule = self.cur_rule()  # ルールボタン
+                show_score = self.cur_score()  # スコアボタン
                 chara_n = self.cur_chara(pyxel.mouse_x, pyxel.mouse_y)  # キャラクタ枠
                 if chara_n!=DISABLE:  # キャラクタ枠
                     self.chara_gameend_msg(chara_n)
                 elif show_rule:
                     self.rule_msg()
+                elif show_score:
+                    self.score_msg()
                 else:
                     pyxel.play(3, 3)  # 選択音
                     if OWN in self.win_list:
@@ -1529,6 +1789,9 @@ class App:
 
     def cur_rule(self):  # カーソル位置からルールボタン
         return 2<=pyxel.mouse_x<18 and HEIGHT-7<=pyxel.mouse_y<HEIGHT-1
+
+    def cur_score(self):  # カーソル位置からスコアボタン
+        return self.consecutive_round>=1 and CHARA_XY[OWN][0]<=pyxel.mouse_x<CHARA_XY[OWN][0]+20 and CHARA_XY[OWN][1]-7<=pyxel.mouse_y<CHARA_XY[OWN][1]-1
 
     def river_pos(self, n):  # 河表示番号(0～24)から表示位置
         x, y = n%RIVER_LINE, n//RIVER_LINE
@@ -1573,8 +1836,22 @@ class App:
         pict.small_tile(16*0+6,16*3+7, (3-1+n)%6+1,(4-1+n)%6+1, 3, 0)
         pict.small_tile(16*2+5,16*6-6, (2-1+n)%6+1,(1-1+n)%6+1, 2, 0)  # 縦
         pict.small_tile(16*2+5,16*7-6, (6-1+n)%6+1,(5-1+n)%6+1, 2, 0)
-        pict.small_tile(16*2+5,16*8-6, (4-1+n)%6+1,(3-1+n)%6+1, 2, 0)
-        pict.small_tile(16*2+5,16*9-6, (2-1+n)%6+1,(1-1+n)%6+1, 2, 0)
+        if self.consecutive_round==0 and self.consecutive_highround==0:
+            pict.small_tile(16*2+5,16*8-6, (4-1+n)%6+1,(3-1+n)%6+1, 2, 0)
+            pict.small_tile(16*2+5,16*9-6, (2-1+n)%6+1,(1-1+n)%6+1, 2, 0)
+        else:
+            if self.consecutive_round>=1:
+                pict.textbox(20, 16*8-6, '連チャン中', 0)
+                pict.textbox(20, 16*8-7, '連チャン中', 10)
+                pict.textbox(12, 16*8+7, f'最高 {self.consecutive_highround} 回 {self.consecutive_highscore}点', 0)
+                pict.textbox(12, 16*8+6, f'*6最高 *E{self.consecutive_highround}*6 回 *E{self.consecutive_highscore}*6点')
+                pict.textbox(12, 16*9+4, f'現在 {self.consecutive_round} 回 {self.consecutive_score}点', 0)
+                pict.textbox(12, 16*9+3, f'*6現在 *A{self.consecutive_round}*6 回 *A{self.consecutive_score}*6点')
+            else:
+                pict.textbox(16, 16*8+1, '連チャン記録', 0)
+                pict.textbox(16, 16*8  , '連チャン記録', 6)
+                pict.textbox(12, 16*8+14, f'最高 {self.consecutive_highround} 回 {self.consecutive_highscore}点', 0)
+                pict.textbox(12, 16*8+13, f'*6最高 *E{self.consecutive_highround}*6 回 *E{self.consecutive_highscore}*6点')
         pict.handname(RIKKA_BTN_X, RIKKA_BTN_Y, HN_RIKKA, True)  # 六華
         pyxel.rect(16*5-4, 16*4+8, 66, 68, 1)  # ルール枠
         pyxel.rectb(16*5-4, 16*4+8, 66, 68, 12)
@@ -1588,11 +1865,14 @@ class App:
         pict.rule(RULE_BTN_XY[RL_10PT][0], RULE_BTN_XY[RL_10PT][1]+(0 if self.rule_10pt else 1), RL_10PT, self.rule_10pt)
         pict.start(START_BTN_X, START_BTN_Y)  # スタートボタン
 
-    def draw_round(self):
+    def draw_round(self):  # ラウンド数
         self.textshadow(WIDTH-8, HEIGHT-7, f'R{self.round_n}', 13)
 
-    def draw_rule_btn(self):
+    def draw_rule_btn(self):  # ルールボタン
         self.textshadow(2, HEIGHT-7, 'RULE', 13)
+
+    def draw_score_btn(self):  # ハイスコアボタン
+        self.textshadow(CHARA_XY[OWN][0], CHARA_XY[OWN][1]-7, 'SCORE', 13)
 
     def draw_charaframe(self):  # キャラクタ枠
         for p in (OWN, P1, P2, P3):
@@ -1701,7 +1981,7 @@ class App:
 
     def draw_handname(self):  # 役名
         for p in (OWN, P1, P2, P3):
-            pict.handname(CHARA_XY[p][0]+2, CHARA_XY[p][1]+2, self.cfmhandname[p], True)
+            pict.handname(CHARA_XY[p][0]+2, CHARA_XY[p][1]+2, self.win_handname[p], True)
 
     def draw_gameend(self):  # ゲーム終了
         for p in (OWN, P1, P2, P3):
@@ -1730,6 +2010,8 @@ class App:
             self.draw_owntile()  # 自牌
             self.draw_river()
             self.draw_rule_btn()
+            if self.consecutive_round>=1:
+                self.draw_score_btn()
         if self.st==ST_PICK:  # 河から自牌を取る
             pict.actionmessage(TILE_XY[OWN][0]+16*len(self.hand[OWN])+2, TILE_XY[OWN][1]+27, AM_DRAW, self.dsp_river_n!=DISABLE)  # 「ツモる」文字
             self.draw_sort_btn() # ソートボタン
