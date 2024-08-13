@@ -1,6 +1,6 @@
 #
-# 六華（リッカ）1.2
-# Rikka.py 2024/6/22
+# 六華（リッカ）1.3
+# Rikka.py 2024/8/13
 #
 DRAW_GRID,GRID_LINE = False,10  # DEBUGグリッド
 CONSOLEOUT = False  # DEBUGコンソール表示
@@ -213,7 +213,7 @@ class Hand2river(River2hand):
 
 class App:
     def holddown(self):
-        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT, 70, 1):
+        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT, hold=70, repeat=1):
             if self.rept==0:
                 self.rept = 1
             elif self.rept==1:
@@ -1322,7 +1322,7 @@ class App:
         self.balloon.append(Balloon(RULE_BTN_XY[RL_10PT][0]-1,y,P3,txt,tm=120))
 
     def __init__(self):
-        pyxel.init(WIDTH, HEIGHT, title='Rikka 1.2', capture_sec=60)
+        pyxel.init(WIDTH, HEIGHT, title='Rikka 1.3', capture_sec=60)
         pyxel.load('assets/Rikka.pyxres')
         pyxel.mouse(True)
         self.bgm = []
@@ -1945,7 +1945,7 @@ class App:
                 pict.mid_tile(x2,y2, self.hand[P1][i][1],self.hand[P1][i][0], vert=False, thk=thk2)
             else:  # 立ち
                 x, y, thk = TILE_XY[P1][0]+TILE_XY[P1][4]*i, TILE_XY[P1][1]+TILE_XY[P1][5]*i, (i==len(self.hand[P1])-1)
-                pict.mid_satand(x, y, dlc=1, thk=thk)
+                pict.mid_stand(x, y, dlc=1, thk=thk)
         for i in range(len(self.hand[P2])):  # 対P2
             x2, y2 = TILE_XY[P2][2]+TILE_XY[P2][4]*i, TILE_XY[P2][3]+TILE_XY[P2][5]*i
             if self.handopen[P2][i]==OP_HIDDEN:  # 非表示
@@ -1956,7 +1956,7 @@ class App:
                 pict.mid_tile(x2,y2, self.hand[P2][i][1],self.hand[P2][i][0])
             else:  # 立ち
                 x, y = TILE_XY[P2][0]+TILE_XY[P2][4]*i, TILE_XY[P2][1]+TILE_XY[P2][5]*i
-                pict.mid_satand(x,y, dlc=2, thk=True)
+                pict.mid_stand(x,y, dlc=2, thk=True)
         for i in range(len(self.hand[P3])):  # 右P3
             x2, y2, thk2 = TILE_XY[P3][2]+TILE_XY[P3][4]*i, TILE_XY[P3][3]+TILE_XY[P3][5]*i, (i==0) 
             if self.handopen[P3][i]==OP_HIDDEN:  # 非表示
@@ -1967,7 +1967,7 @@ class App:
                 pict.mid_tile(x2,y2, self.hand[P3][i][0],self.hand[P3][i][1], vert=False, thk=thk2)
             else:  # 立ち
                 x, y, thk = TILE_XY[P3][0]+TILE_XY[P3][4]*i, TILE_XY[P3][1]+TILE_XY[P3][5]*i, (1 if i==0 else 0)
-                pict.mid_satand(x,y, dlc=3, thk=thk)
+                pict.mid_stand(x,y, dlc=3, thk=thk)
 
     def draw_rotswap_btn(self):  # 回転／交換ボタン
         for i in range(len(self.hand[OWN])):

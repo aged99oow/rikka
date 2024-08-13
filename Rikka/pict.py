@@ -135,7 +135,7 @@ def mid_tile(x, y, n1, n2, vert=True, thk=1):  # Number1, Number2, Vertical, Thi
                 pyxel.blt(x, y+11, 0, 168, 76, 23, 3, 1)  # 厚み下
             pyxel.blt(x, y, 0, 0, 72, 23, 12, 1)
 
-def mid_satand(x, y, dlc, thk=False):  #  Direction(1,2,3), Thickness
+def mid_stand(x, y, dlc, thk=False):  #  Direction(1,2,3), Thickness
     if dlc==1:
         if thk:
             pyxel.blt(x, y+11, 0, 128, 60, 6, 2, 1)
